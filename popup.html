@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZenBlock</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';">
+  <style>
+    :root {
+      /* Light mode colors */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-tertiary: #e9ecef;
+      --text-primary: #1a1a1a;
+      --text-secondary: #495057;
+      --text-muted: #6c757d;
+      --border-color: #ced4da;
+      --border-light: #e1e4e8;
+      --primary-color: #007bff;
+      --primary-hover: #0056b3;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --secondary-color: #6c757d;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --shadow-hover: rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="dark"] {
+      /* Dark mode colors */
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #2d2d2d;
+      --bg-tertiary: #404040;
+      --text-primary: #ffffff;
+      --text-secondary: #b8b8b8;
+      --text-muted: #888888;
+      --border-color: #404040;
+      --border-light: #555555;
+      --primary-color: #4dabf7;
+      --primary-hover: #339af0;
+      --success-color: #51cf66;
+      --danger-color: #ff6b6b;
+      --secondary-color: #868e96;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --shadow-hover: rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      min-height: 480px;
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+    }
+    
+    .title::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+      background-image: url('icons/meditation.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    .theme-toggle {
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+      border-radius: 24px;
+      padding: 4px;
+      display: flex;
+      cursor: pointer;
+      position: relative;
+      width: 48px;
+      height: 28px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .theme-toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    [data-theme="dark"] .theme-toggle {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--primary-color)33;
+    }
+    
+    [data-theme="dark"] .theme-toggle-slider {
+      transform: translateX(20px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .theme-toggle:hover {
+      border-color: var(--primary-color);
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Stats Section */
+    .stats-section {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    .stats-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      background-image: url('icons/encrypted.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.8;
+    }
+    
+    .stats-number {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+    
+    .stats-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+    
+    .stats-details {
+      display: flex;
+      justify-content: space-around;
+      padding: 16px 0;
+      border-top: 1px solid var(--border-light);
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    
+    .stat-label-small {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Toggle Section */
+    .toggle-section {
+      margin-bottom: 24px;
+    }
+    
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .toggle-container:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    
+    .toggle-label {
+      font-size: 14px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .toggle-switch.active {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--primary-color)33;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(20px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: auto;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px var(--shadow-hover);
+    }
+    
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+      border-color: var(--primary-color);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Footer */
+    .footer {
+      padding: 12px 20px;
+      text-align: center;
+      border-top: 1px solid var(--border-light);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    
+    .footer::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 4px;
+      background-image: url('icons/lotus.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.7;
+    }
+    
+    .footer::after {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-left: 4px;
+      background-image: url('icons/lotus.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.7;
+    }
+    
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border-color);
+      border-top: 2px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 4px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <!-- Header -->
+  <header class="header">
+    <div class="title">ZenBlock</div>
+    <div class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <div class="theme-toggle-slider"></div>
+    </div>
+  </header>
+  
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Stats Section -->
+    <section class="stats-section">
+      <div class="stats-icon"></div>
+      <div class="stats-number" id="blockedCount">0</div>
+      <div class="stats-label">Ads blocked</div>
+      <div class="stats-details">
+        <div class="stat-item">
+          <div class="stat-value" id="todayCount">0</div>
+          <div class="stat-label-small">Today</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="totalSites">0</div>
+          <div class="stat-label-small">Sites</div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Toggle Section -->
+    <section class="toggle-section">
+      <div class="toggle-container">
+        <span class="toggle-label">Enable ZenBlock</span>
+        <div class="toggle-switch" id="toggleSwitch">
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Action Buttons -->
+    <section class="action-buttons">
+      <button class="btn btn-primary" id="openOptions">Settings</button>
+      <button class="btn btn-secondary" id="viewStats">Statistics</button>
+    </section>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    ZenBlock v1.0.0
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
