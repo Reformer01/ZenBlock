@@ -1,0 +1,157 @@
+! EasyList filter list - Sample for AdBlock Pro
+! This is a simplified version for demonstration
+! 
+! Title: EasyList
+! Last modified: Today
+! Version: 1.0
+! Homepage: https://easylist.to/
+
+! General ad blocking rules
+||doubleclick.net^
+||googlesyndication.com^
+||googleadservices.com^
+||googletagmanager.com^
+||google-analytics.com^
+||facebook.com/tr^
+||amazon-adsystem.com^
+||adsystem.google.com^
+||partner.googleadservices.com^
+||securepubads.g.doubleclick.net^
+||pagead2.googlesyndication.com^
+||googlesyndication.com/pagead^
+||googleads.g.doubleclick.net^
+||ads.google.com^
+||googleads.g.doubleclick.net^
+||googleadservices.com/pagead^
+||partner.googleadservices.com/gampad^
+||googleads.g.doubleclick.net/pagead^
+||pagead2.googlesyndication.com/pagead^
+||securepubads.g.doubleclick.net/tag^
+||googleads.g.doubleclick.net/clk^
+||googleadservices.com/ads^
+||googlesyndication.com/ads^
+||doubleclick.net/adj^
+||doubleclick.net/adi^
+||doubleclick.net/ad^
+||doubleclick.net/clk^
+||doubleclick.net/imp^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+||doubleclick.net/pfadx^
+
+! Social media tracking
+||connect.facebook.net^
+||facebook.com/connect^
+||facebook.net/en_US/fbevents.js^
+||twitter.com/i/jot^
+||platform.twitter.com/widgets.js^
+||linkedin.com/li/track^
+||instagram.com/tracking^
+
+! Analytics services
+||google-analytics.com/analytics.js^
+||google-analytics.com/ga.js^
+||google-analytics.com/collect^
+||googletagmanager.com/gtm.js^
+||googletagmanager.com/gtag^
+||mixpanel.com/track^
+||segment.io/analytics.js^
+||hotjar.com/hotjar^
+
+! Ad networks
+||adsystem.amazon.com^
+||c.amazon-adsystem.com^
+||amazon-adsystem.com^
+||googlesyndication.com^
+||doubleclick.net^
+||googleadservices.com^
+||googletagmanager.com^
+||google-analytics.com^
+||facebook.com/tr^
+||facebook.com/ads^
+||facebook.com/ad^
+||facebook.com/adx^
+||facebook.com/ads^
+||facebook.com/ad^
+||facebook.com/adx^
+
+! Mobile ad networks
+||admob.com^
+||googleads.g.doubleclick.net^
+||googleadservices.com/pagead^
+||googlesyndication.com/pagead^
+||googleads.g.doubleclick.net/pagead^
+||pagead2.googlesyndication.com/pagead^
+||googleads.g.doubleclick.net/clk^
+||googleadservices.com/ads^
+||googlesyndication.com/ads^
+
+! Video ads
+||youtube.com/api/stats/ads^
+||youtube.com/get_video_info^
+||youtube.com/watch_popup^
+||youtube.com/embed^
+||youtube.com/v^
+||youtube.com/player^
+||youtube.com/api^
+||youtube.com/iframe_api^
+
+! Third-party trackers
+||scorecardresearch.com^
+||quantserve.com^
+||comscore.com^
+||chartbeat.com^
+||newrelic.com^
+||segment.io^
+||mixpanel.com^
+||hotjar.com^
+||fullstory.com^
+||logrocket.com^
+
+! Malvertising protection
+||malvertising.example^
+||malware.example^
+||virus.example^
+
+! Generic ad containers
+##.ad
+##.ads
+##.advertisement
+##.advertising
+##.ad-container
+##.ad-wrapper
+##.ad-banner
+##.ad-block
+##.ad-slot
+##.google-ads
+##.adsense
+##.adsbygoogle
+##.google-ad
+##.google-adsense
+##.google-ad-sense
+##.google-adsense
+
+! Specific ad elements
+##div[id^="ad_"]
+##div[id^="ads_"]
+##div[id^="google_ads_"]
+##div[id^="google_adsense_"]
+##div[class^="ad_"]
+##div[class^="ads_"]
+##div[class^="google_ads_"]
+##div[class^="google_adsense_"]
+
+! Iframe ads
+##iframe[src*="doubleclick"]
+##iframe[src*="googleads"]
+##iframe[src*="googlesyndication"]
+##iframe[src*="googleadservices"]
+##iframe[src*="facebook.com/tr"]
+##iframe[src*="amazon-adsystem"]

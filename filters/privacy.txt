@@ -1,0 +1,203 @@
+! Privacy protection filter list - Sample for AdBlock Pro
+! Focuses on blocking trackers and privacy-invasive scripts
+!
+! Title: EasyPrivacy
+! Last modified: Today
+! Version: 1.0
+! Homepage: https://easylist.to/
+
+! Analytics and tracking
+||google-analytics.com^
+||googletagmanager.com^
+||googleadservices.com^
+||doubleclick.net^
+||facebook.com/tr^
+||facebook.com/ads^
+||facebook.com/adx^
+||connect.facebook.net^
+||facebook.net^
+||fbcdn.net^
+
+! Social media widgets and tracking
+||platform.twitter.com^
+||twitter.com/widgets^
+||syndication.twitter.com^
+||cdn.syndication.twitter.com^
+||platform.instagram.com^
+||instagram.com/tracking^
+||linkedin.com/li/track^
+||linkedin.com/insight-tag^
+||pinterest.com/pinit^
+||pinterest.com/widget^
+
+! Fingerprinting scripts
+||fingerprintjs.com^
+||fpcdn.net^
+||browser-update.org^
+||cloudflareinsights.com^
+||cloudflare.com/cdn-cgi^
+||jsdelivr.net^
+||unpkg.com^
+
+! Consent management and cookie banners
+||cookieconsent.insurancedigital.com^
+||cookiehub.net^
+||cookie-script.com^
+||cookiebot.com^
+||onetrust.com^
+||trustarc.com^
+||quantcast.mgr.consensu.org^
+||consent.google.com^
+
+! Data brokers and marketing automation
+||segment.io^
+||segment.com^
+||mixpanel.com^
+||hotjar.com^
+||fullstory.com^
+||logrocket.com^
+||mouseflow.com^
+||clarity.ms^
+||microsoft.com/clarity^
+
+! Email tracking pixels
+||mandrillapp.com^
+||sendgrid.net^
+||mailchimp.com^
+||campaignmonitor.com^
+||constantcontact.com^
+||convertkit.com^
+||activecampaign.com^
+
+! Affiliate marketing tracking
+||shareasale.com^
+||commissionjunction.com^
+||linkshare.com^
+||rakutenmarketing.com^
+||impactradius.com^
+||tapfiliate.com^
+||refersion.com^
+
+! Location tracking
+||ipinfo.io^
+||ip-api.com^
+||geoip.nekudo.com^
+||freegeoip.net^
+||ipstack.com^
+||ipgeolocation.io^
+
+! Device and browser tracking
+||deviceatlas.com^
+||51degrees.com^
+||wurfl.io^
+||browserstack.com^
+||crossbrowsertesting.com^
+||browserling.com^
+
+! Advertising exchanges
+||adsystem.amazon.com^
+||c.amazon-adsystem.com^
+||amazon-adsystem.com^
+||rubiconproject.com^
+||pubmatic.com^
+||indexww.com^
+||criteo.net^
+||criteo.com^
+||adnxs.com^
+||advertising.com^
+
+! Behavioral advertising
+||advertising.com^
+||advertising2.com^
+||advertising3.com^
+||advertising4.com^
+||advertising5.com^
+||advertising6.com^
+||advertising7.com^
+||advertising8.com^
+||advertising9.com^
+||advertising10.com^
+
+! Cross-site tracking
+||doubleclick.net^
+||googleads.g.doubleclick.net^
+||googleadservices.com^
+||googlesyndication.com^
+||googletagmanager.com^
+||google-analytics.com^
+||google.com/analytics^
+||google.com/ads^
+||google.com/adsense^
+||google.com/adsense^
+
+! Mobile app tracking
+||appsflyer.com^
+||branch.io^
+||adjust.com^
+||kochava.com^
+||mixpanel.com^
+||amplitude.com^
+||segment.io^
+||firebase.google.com^
+||firebaseio.com^
+||crashlytics.com^
+
+! Web beacons and tracking pixels
+||2o7.net^
+||omtrdc.net^
+||btttag.com^
+||scorecardresearch.com^
+||quantserve.com^
+||comscore.com^
+||chartbeat.com^
+||newrelic.com^
+||datadoghq.com^
+||dynatrace.com^
+
+! Privacy-invasive scripts
+||privacy-policy.truste.com^
+||privacy-policy.truste.net^
+||privacy-policy.truste.org^
+||privacy-policy.truste.co.uk^
+||privacy-policy.truste.de^
+||privacy-policy.truste.fr^
+||privacy-policy.truste.es^
+||privacy-policy.truste.it^
+||privacy-policy.truste.nl^
+||privacy-policy.truste.se^
+
+! Cookie synchronization
+||sync.taboola.com^
+||sync.outbrain.com^
+||sync.revcontent.com^
+||sync.contentad.net^
+||sync.adblade.com^
+||sync.adnxs.com^
+||sync.googleadservices.com^
+||sync.doubleclick.net^
+||sync.criteo.net^
+||sync.pubmatic.com^
+
+! Data collection services
+||dataxu.com^
+||turn.com^
+||adobe.com^
+||adobe.com/analytics^
+||adobe.com/omniture^
+||adobe.com/target^
+||adobe.com/experience-cloud^
+||adobe.com/marketing-cloud^
+||adobe.com/advertising-cloud^
+||adobe.com/experience-manager^
+
+! Behavioral targeting
+||behavioralengine.com^
+||behavioraltargeting.com^
+||behavioralads.com^
+||behavioralanalytics.com^
+||behavioralmarketing.com^
+||behavioraltracking.com^
+||behavioraldata.com^
+||behavioralinsights.com^
+||behavioralmetrics.com^
+||behavioraloptimization.com^

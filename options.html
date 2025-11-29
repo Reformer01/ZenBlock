@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZenBlock - Settings</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';">
+  <style>
+    :root {
+      /* Light mode colors */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-tertiary: #e9ecef;
+      --text-primary: #1a1a1a;
+      --text-secondary: #495057;
+      --text-muted: #6c757d;
+      --border-color: #ced4da;
+      --border-light: #e1e4e8;
+      --primary-color: #007bff;
+      --primary-hover: #0056b3;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --danger-hover: #c82333;
+      --secondary-color: #6c757d;
+      --secondary-hover: #545b62;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --shadow-hover: rgba(0, 0, 0, 0.15);
+      --performance-bg: #e7f3ff;
+      --performance-border: #b3d7ff;
+      --performance-text: #004085;
+      --sidebar-width: 280px;
+      --header-height: 60px;
+    }
+
+    [data-theme="dark"] {
+      /* Dark mode colors */
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #2d2d2d;
+      --bg-tertiary: #404040;
+      --text-primary: #ffffff;
+      --text-secondary: #b8b8b8;
+      --text-muted: #888888;
+      --border-color: #404040;
+      --border-light: #555555;
+      --primary-color: #4dabf7;
+      --primary-hover: #339af0;
+      --success-color: #51cf66;
+      --danger-color: #ff6b6b;
+      --danger-hover: #ff5252;
+      --secondary-color: #868e96;
+      --secondary-hover: #6c757d;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --shadow-hover: rgba(0, 0, 0, 0.4);
+      --performance-bg: #2b5797;
+      --performance-border: #4dabf7;
+      --performance-text: #74c0fc;
+    }
+
+    * {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      height: var(--header-height);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 4px var(--shadow);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .header-title::before {
+      content: "";
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      margin-right: 12px;
+      background-image: url('icons/meditation.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .theme-toggle {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 4px;
+      display: flex;
+      cursor: pointer;
+      position: relative;
+      width: 60px;
+      height: 28px;
+    }
+
+    .theme-toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: var(--primary-color);
+      border-radius: 50%;
+      transition: transform 0.3s ease;
+    }
+
+    [data-theme="dark"] .theme-toggle-slider {
+      transform: translateX(32px);
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--primary-color);
+    }
+
+    /* Layout Container */
+    .container {
+      display: flex;
+      flex: 1;
+      margin-top: var(--header-height);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-light);
+      padding: 24px 16px;
+      position: fixed;
+      left: 0;
+      top: var(--header-height);
+      bottom: 0;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      margin-bottom: 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .nav-item::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      margin-right: 12px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .nav-item[data-section="dashboard"]::before {
+      background-image: url('icons/stats.png');
+    }
+
+    .nav-item[data-section="whitelist"]::before {
+      background-image: url('icons/encrypted.png');
+    }
+
+    .nav-item[data-section="filters"]::before {
+      background-image: url('icons/3d-alarm.png');
+    }
+
+    .nav-item[data-section="advanced"]::before {
+      background-image: url('icons/adjustable-spanner.png');
+    }
+
+    .nav-item[data-section="about"]::before {
+      background-image: url('icons/meditation.png');
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      padding: 32px;
+      max-width: 1200px;
+    }
+
+    .content-section {
+      display: none;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    .section-header {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .section-description {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+
+    .card-title::before {
+      content: "";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .card-title[data-icon="📈"]::before {
+      background-image: url('icons/stats.png');
+    }
+
+    .card-title[data-icon="➕"]::before {
+      background-image: url('icons/plus.png');
+    }
+
+    .card-title[data-icon="📋"]::before {
+      background-image: url('icons/to-do-list.png');
+    }
+
+    .card-title[data-icon="🛡️"]::before {
+      background-image: url('icons/encrypted.png');
+    }
+
+    .card-title[data-icon="⏰"]::before {
+      background-image: url('icons/3d-alarm.png');
+    }
+
+    .card-title[data-icon="🔧"]::before {
+      background-image: url('icons/adjustable-spanner.png');
+    }
+
+    .card-title[data-icon="📊"]::before {
+      background-image: url('icons/performance.png');
+    }
+
+    .card-title[data-icon="🧘"]::before {
+      background-image: url('icons/meditation.png');
+    }
+
+    .card-description {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-color)33;
+    }
+
+    .form-checkbox {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      padding: 16px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .form-checkbox:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .form-checkbox input[type="checkbox"] {
+      display: none;
+    }
+
+    .form-checkbox .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+      border-radius: 24px;
+      margin-right: 16px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .form-checkbox input[type="checkbox"]:checked + .toggle-switch {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--primary-color)33;
+    }
+
+    .form-checkbox .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-checkbox input[type="checkbox"]:checked + .toggle-switch::after {
+      transform: translateX(20px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-checkbox label {
+      flex: 1;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 500;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-checkbox label .label-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .form-checkbox label .label-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 400;
+      line-height: 1.4;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px var(--shadow);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px var(--shadow-hover);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--secondary-color);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: var(--secondary-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .btn-success {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    /* Whitelist Items */
+    .whitelist-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background: var(--bg-primary);
+    }
+
+    .whitelist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .whitelist-item:last-child {
+      border-bottom: none;
+    }
+
+    .whitelist-domain {
+      flex: 1;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .whitelist-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* Input Group */
+    .input-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .input-group .form-input {
+      flex: 1;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Performance Stats */
+    .performance-stats {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .performance-stats h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+    
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    
+    .feature-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      opacity: 0.8;
+    }
+
+    /* Messages */
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .message-success {
+      background: rgba(40, 167, 69, 0.1);
+      border: 1px solid var(--success-color);
+      color: var(--success-color);
+    }
+
+    .message-error {
+      background: rgba(220, 53, 69, 0.1);
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .footer::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 4px;
+      background-image: url('icons/lotus.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.7;
+    }
+    
+    .footer::after {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-left: 4px;
+      background-image: url('icons/lotus.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.7;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-title">ZenBlock Settings</div>
+    <div class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <div class="theme-toggle-slider"></div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <a href="#dashboard" class="nav-item active" data-icon="📊" data-section="dashboard">Dashboard</a>
+      <a href="#whitelist" class="nav-item" data-icon="🔒" data-section="whitelist">Whitelist</a>
+      <a href="#filters" class="nav-item" data-icon="🛡️" data-section="filters">Filter Lists</a>
+      <a href="#advanced" class="nav-item" data-icon="⚙️" data-section="advanced">Advanced</a>
+      <a href="#about" class="nav-item" data-icon="ℹ️" data-section="about">About</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="content-section active">
+        <div class="section-header">
+          <h1 class="section-title">Dashboard</h1>
+          <p class="section-description">Overview of ZenBlock performance and statistics</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="blockedCount">0</div>
+            <div class="stat-label">Ads Blocked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="whitelistCount">0</div>
+            <div class="stat-label">Whitelisted Sites</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="filterCount">0</div>
+            <div class="stat-label">Active Filters</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="uptimeCount">0%</div>
+            <div class="stat-label">Uptime</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-icon="📈">Performance Statistics</h3>
+          <div class="performance-stats" id="performanceStats">
+            <h4>Performance Overview</h4>
+            <p>Average response time: <span id="avgResponseTime">0ms</span></p>
+            <p>Total blocked today: <span id="blockedToday">0</span></p>
+            <p>Total blocked all time: <span id="totalBlocked">0</span></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Whitelist Section -->
+      <section id="whitelist" class="content-section">
+        <div class="section-header">
+          <h1 class="section-title">Whitelist Management</h1>
+          <p class="section-description">Manage websites that are allowed to show ads</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-icon="➕">Add Website to Whitelist</h3>
+          <p class="card-description">Add a website domain to exclude from ad blocking</p>
+          <div class="input-group">
+            <input type="text" id="whitelistInput" class="form-input" placeholder="example.com">
+            <button class="btn btn-primary" id="addWhitelist">Add to Whitelist</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-icon="📋">Whitelisted Websites</h3>
+          <div class="whitelist-list" id="whitelistContainer">
+            <!-- Whitelist items will be added here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Filters Section -->
+      <section id="filters" class="content-section">
+        <div class="section-header">
+          <h1 class="section-title">Filter Lists</h1>
+          <p class="section-description">Configure which filter lists to use for ad blocking</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-icon="🛡️">Ad Blocking Filters</h3>
+          <p class="card-description">Enable or disable specific filter lists</p>
+          
+          <div class="form-checkbox">
+          <input type="checkbox" id="enableEasyList" checked>
+          <div class="toggle-switch"></div>
+          <label for="enableEasyList">
+            <span class="label-title">EasyList</span>
+            <span class="label-description">Blocks most common ads and advertisements</span>
+          </label>
+        </div>
+        
+        <div class="form-checkbox">
+          <input type="checkbox" id="enablePrivacyList">
+          <div class="toggle-switch"></div>
+          <label for="enablePrivacyList">
+            <span class="label-title">Privacy Protection</span>
+            <span class="label-description">Blocks trackers, analytics, and privacy-invading scripts</span>
+          </label>
+        </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-icon="⏰">Update Settings</h3>
+          <div class="form-group">
+            <label class="form-label" for="updateFrequency">Update Filter Lists:</label>
+            <select id="updateFrequency" class="form-select">
+              <option value="1">Daily</option>
+              <option value="7" selected>Weekly</option>
+              <option value="30">Monthly</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advanced Section -->
+      <section id="advanced" class="content-section">
+        <div class="section-header">
+          <h1 class="section-title">Advanced Settings</h1>
+          <p class="section-description">Advanced configuration options for power users</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-icon="🔧">System Settings</h3>
+          <p class="card-description">Manage extension settings and data</p>
+          
+          <div class="btn-group">
+            <button class="btn btn-primary" id="saveSettings">Save Settings</button>
+            <button class="btn btn-secondary" id="resetSettings">Reset to Defaults</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-icon="📊">Debug Information</h3>
+          <div class="performance-stats">
+            <h4>Extension Status</h4>
+            <p>Extension version: 1.0.0</p>
+            <p>Manifest version: 3</p>
+            <p>Last filter update: <span id="lastUpdate">Never</span></p>
+            <p>Service worker status: Active</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section id="about" class="content-section">
+        <div class="section-header">
+          <h1 class="section-title">About ZenBlock</h1>
+          <p class="section-description">Information about the ZenBlock extension</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-icon="🧘">ZenBlock v1.0.0</h3>
+          <p class="card-description">
+            ZenBlock is a powerful and secure ad-blocking browser extension that provides peaceful and secure browsing. 
+            Built with modern web technologies and focused on user privacy and performance.
+          </p>
+          
+          <div class="performance-stats">
+            <h4>Features</h4>
+            <div class="feature-list">
+              <div class="feature-item">
+                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <span>Efficient ad blocking with declarativeNetRequest</span>
+              </div>
+              <div class="feature-item">
+                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <span>Comprehensive filter list support</span>
+              </div>
+              <div class="feature-item">
+                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <span>Privacy protection and tracker blocking</span>
+              </div>
+              <div class="feature-item">
+                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <span>Performance monitoring and optimization</span>
+              </div>
+              <div class="feature-item">
+                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <span>Dark mode and modern UI design</span>
+              </div>
+              <div class="feature-item">
+                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <span>Robust error handling and recovery</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    ZenBlock v1.0.0 • Peaceful & Secure Browsing
+  </footer>
+
+  <!-- Messages -->
+  <div id="savedMessage" class="message message-success" style="display: none;">✓ Settings saved successfully!</div>
+  <div id="errorMessage" class="message message-error" style="display: none;"></div>
+
+  <script src="options.js"></script>
+</body>
+</html>
