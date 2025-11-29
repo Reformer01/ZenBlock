@@ -1,4 +1,4 @@
-# AdBlock Pro
+# ZenBlock
 
 A powerful and efficient ad-blocking browser extension that blocks ads, trackers, and other unwanted content across the web.
 
