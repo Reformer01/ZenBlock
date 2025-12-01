@@ -789,6 +789,22 @@
         </div>
 
         <div class="card">
+          <h3 class="card-title" data-icon="📋">Filter List Management</h3>
+          <div class="filter-lists-container" id="filterListsContainer">
+            <!-- Filter lists will be dynamically loaded here -->
+          </div>
+          
+          <div class="form-group">
+            <button class="btn btn-primary" id="addCustomListBtn">
+              <span class="btn-icon">+</span> Add Custom Filter List
+            </button>
+            <button class="btn btn-secondary" id="updateAllListsBtn">
+              <span class="btn-icon">🔄</span> Update All Lists
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
           <h3 class="card-title" data-icon="⏰">Update Settings</h3>
           <div class="form-group">
             <label class="form-label" for="updateFrequency">Update Filter Lists:</label>
@@ -888,5 +904,33 @@
   <div id="errorMessage" class="message message-error" style="display: none;"></div>
 
   <script src="options.js"></script>
+
+  <!-- Custom Filter List Modal -->
+  <div class="modal" id="customListModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Custom Filter List</h3>
+        <button class="modal-close" id="closeModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="customListName">List Name</label>
+          <input type="text" id="customListName" class="form-input" placeholder="e.g., My Custom Filters">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="customListUrl">List URL</label>
+          <input type="url" id="customListUrl" class="form-input" placeholder="https://example.com/filters.txt">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="customListDescription">Description (optional)</label>
+          <textarea id="customListDescription" class="form-input" rows="3" placeholder="Describe what this filter list blocks..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelAddList">Cancel</button>
+        <button class="btn btn-primary" id="confirmAddList">Add List</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

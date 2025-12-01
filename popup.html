@@ -335,7 +335,245 @@
       opacity: 0.7;
     }
     
-    /* Loading animation */
+    /* Performance Section */
+.performance-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.performance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.performance-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.performance-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success-color);
+  position: relative;
+}
+
+.performance-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.performance-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.performance-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.performance-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 60px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.progress-value {
+  font-size: 10px;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Activity Section */
+.activity-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.activity-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.activity-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.activity-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-icon.blocked {
+  background: var(--danger-color);
+  color: white;
+  font-size: 8px;
+}
+
+.activity-icon.blocked::before {
+  content: "×";
+  font-weight: bold;
+}
+
+.activity-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-text {
+  font-size: 11px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-time {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* Enhanced Stats Display */
+.stats-section {
+  margin: 16px 0;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  border-radius: 16px;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-section::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.stats-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 8px;
+  background-image: url('icons/encrypted.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.9;
+}
+
+.stats-number {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stats-label {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-bottom: 12px;
+}
+
+.stats-details {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.stat-label-small {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* Loading animation */
     .loading {
       display: inline-block;
       width: 12px;
@@ -377,6 +615,74 @@
         <div class="stat-item">
           <div class="stat-value" id="totalSites">0</div>
           <div class="stat-label-small">Sites</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="avgResponse">0ms</div>
+          <div class="stat-label-small">Avg</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Performance Section -->
+    <section class="performance-section">
+      <div class="performance-header">
+        <div class="performance-title">Performance</div>
+        <div class="performance-indicator" id="performanceIndicator">
+          <div class="performance-dot"></div>
+        </div>
+      </div>
+      <div class="performance-stats">
+        <div class="performance-bar">
+          <div class="performance-label">CPU Usage</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="cpuUsage" style="width: 0%"></div>
+          </div>
+          <div class="progress-value" id="cpuValue">0%</div>
+        </div>
+        <div class="performance-bar">
+          <div class="performance-label">Memory</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="memoryUsage" style="width: 0%"></div>
+          </div>
+          <div class="progress-value" id="memoryValue">0MB</div>
+        </div>
+        <div class="performance-bar">
+          <div class="performance-label">Rules Active</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="rulesUsage" style="width: 0%"></div>
+          </div>
+          <div class="progress-value" id="rulesValue">0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Activity -->
+    <section class="activity-section">
+      <div class="activity-header">
+        <div class="activity-title">Recent Activity</div>
+        <div class="activity-time" id="lastUpdate">Just now</div>
+      </div>
+      <div class="activity-list" id="activityList">
+        <div class="activity-item">
+          <div class="activity-icon blocked"></div>
+          <div class="activity-details">
+            <div class="activity-text">Blocked ad on google.com</div>
+            <div class="activity-time">2s ago</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon blocked"></div>
+          <div class="activity-details">
+            <div class="activity-text">Blocked tracker on facebook.com</div>
+            <div class="activity-time">5s ago</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon blocked"></div>
+          <div class="activity-details">
+            <div class="activity-text">Blocked analytics on youtube.com</div>
+            <div class="activity-time">8s ago</div>
+          </div>
         </div>
       </div>
     </section>
