@@ -55,26 +55,40 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 });
 
 // Enhanced filter list loading with retry mechanism and caching
-async function loadFilterLists(retryCount = 0) {
+async function loadFilterLists(retryCount = 0, force = false) {
   try {
-    const settings = await chrome.storage.sync.get(['filterLists', 'lastFilterUpdate']);
+    const settings = await chrome.storage.sync.get(['filterLists', 'lastFilterUpdate', 'updateFrequency']);
     const now = Date.now();
     
-    // Check if we need to update filter lists
-    const shouldUpdate = !settings.lastFilterUpdate || 
+    // Ensure filterLists has default values
+    const filterLists = settings.filterLists || {
+      easyList: true,
+      privacyList: false
+    };
+    
+    console.log('Loading filter lists with settings:', filterLists);
+    
+    // Check if we need to update filter lists (or force reload)
+    const shouldUpdate = force || !settings.lastFilterUpdate || 
                         (now - settings.lastFilterUpdate) > (parseInt(settings.updateFrequency || '7') * 24 * 60 * 60 * 1000);
     
     if (shouldUpdate || retryCount > 0) {
-      console.log(`Loading filter lists (attempt ${retryCount + 1})`);
+      console.log(`Loading filter lists (attempt ${retryCount + 1}, force: ${force})`);
       
       const filterPromises = [];
       
-      if (settings.filterLists?.easyList !== false) {
+      if (filterLists.easyList !== false) {
+        console.log('Loading EasyList...');
         filterPromises.push(loadFilterList('easylist.txt'));
+      } else {
+        console.log('EasyList is disabled');
       }
       
-      if (settings.filterLists?.privacyList) {
+      if (filterLists.privacyList === true) {
+        console.log('Loading Privacy List...');
         filterPromises.push(loadFilterList('privacy.txt'));
+      } else {
+        console.log('Privacy List is disabled');
       }
       
       const results = await Promise.allSettled(filterPromises);
@@ -84,17 +98,19 @@ async function loadFilterLists(retryCount = 0) {
         const allRules = successfulFilters.flat();
         await applyFilterRules(allRules);
         await chrome.storage.sync.set({ lastFilterUpdate: now });
-        console.log(`Successfully loaded ${allRules.length} filter rules`);
+        console.log(`Successfully loaded ${allRules.length} filter rules from ${successfulFilters.length} filter lists`);
       } else {
         throw new Error('No filter lists loaded successfully');
       }
+    } else {
+      console.log('Filter lists recently updated, skipping reload');
     }
     
   } catch (error) {
     console.error(`Filter list loading failed (attempt ${retryCount + 1}):`, error);
     
     if (retryCount < ADBLOCK_CONFIG.RETRY_ATTEMPTS) {
-      setTimeout(() => loadFilterLists(retryCount + 1), ADBLOCK_CONFIG.RETRY_DELAY);
+      setTimeout(() => loadFilterLists(retryCount + 1, force), ADBLOCK_CONFIG.RETRY_DELAY);
     } else {
       console.error('All filter list loading attempts failed, using fallback rules');
       await applyFallbackRules();
@@ -301,39 +317,44 @@ async function applyFallbackRules() {
 
 // Enhanced message handling with validation
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  try {
-    // Validate message structure
-    if (!request || typeof request !== 'object') {
-      throw new Error('Invalid message format');
+  (async () => {
+    try {
+      // Validate message structure
+      if (!request || typeof request !== 'object') {
+        throw new Error('Invalid message format');
+      }
+      
+      switch (request.action) {
+        case 'getStats':
+          handleGetStats(sendResponse);
+          return true;
+          
+        case 'toggleEnabled':
+          await handleToggleEnabled(request.isEnabled);
+          return false;
+          
+        case 'reloadFilters':
+          // Force reload filters regardless of update frequency
+          await loadFilterLists(0, true);
+          return false;
+          
+        case 'updateWhitelist':
+          await handleUpdateWhitelist(request.whitelist);
+          return false;
+          
+        default:
+          console.warn('Unknown message action:', request.action);
+      }
+      
+    } catch (error) {
+      console.error('Message handling error:', error);
+      if (sendResponse) sendResponse({ error: error.message });
     }
     
-    switch (request.action) {
-      case 'getStats':
-        handleGetStats(sendResponse);
-        return true;
-        
-      case 'toggleEnabled':
-        handleToggleEnabled(request.isEnabled);
-        return false;
-        
-      case 'reloadFilters':
-        loadFilterLists();
-        return false;
-        
-      case 'updateWhitelist':
-        handleUpdateWhitelist(request.whitelist);
-        return false;
-        
-      default:
-        console.warn('Unknown message action:', request.action);
-    }
-    
-  } catch (error) {
-    console.error('Message handling error:', error);
-    if (sendResponse) sendResponse({ error: error.message });
-  }
+    return false;
+  })();
   
-  return false;
+  return true; // Keep message channel open for async response
 });
 
 // Handle stats request with performance data
