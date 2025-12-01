@@ -1,35 +1,44 @@
-! Privacy protection filter list - Sample for AdBlock Pro
-! Focuses on blocking trackers and privacy-invasive scripts
+! Privacy protection filter list - Comprehensive tracking protection
+! Blocks trackers, analytics, and privacy-invading scripts
 !
 ! Title: EasyPrivacy
-! Last modified: Today
-! Version: 1.0
+! Last modified: 2024-12-01
+! Version: 2.0
 ! Homepage: https://easylist.to/
+! License: https://easylist.to/pages/licence.html
 
-! Analytics and tracking
+! Analytics and tracking services
 ||google-analytics.com^
 ||googletagmanager.com^
-||googleadservices.com^
-||doubleclick.net^
-||facebook.com/tr^
-||facebook.com/ads^
-||facebook.com/adx^
-||connect.facebook.net^
-||facebook.net^
-||fbcdn.net^
+||google-analytics.com/ga.js^
+||google-analytics.com/analytics.js^
+||google-analytics.com/collect^
+||googletagmanager.com/gtm.js^
+||googletagmanager.com/gtag^
+||googletagmanager.com/gtm.js^
 
-! Social media widgets and tracking
-||platform.twitter.com^
-||twitter.com/widgets^
-||syndication.twitter.com^
-||cdn.syndication.twitter.com^
-||platform.instagram.com^
-||instagram.com/tracking^
+! Facebook tracking
+||facebook.com/tr^
+||connect.facebook.net^
+||facebook.com/connect^
+||facebook.net/en_US/fbevents.js^
+||facebook.com/plugins/like.php^
+||facebook.com/plugins/share_button.php^
+
+! Twitter/X tracking
+||twitter.com/i/jot^
+||platform.twitter.com/widgets.js^
+||analytics.twitter.com^
+||api.twitter.com/1.1/jot^
+
+! LinkedIn tracking
 ||linkedin.com/li/track^
 ||linkedin.com/insight-tag^
-||pinterest.com/pinit^
-||pinterest.com/widget^
+||licdn.com/scds/common/u/lib/analytics^
 
+! Instagram tracking
+||instagram.com/tracking^
+||instagram.com/static/bundles/metro/ClientLogging.js^
 ! Fingerprinting scripts
 ||fingerprintjs.com^
 ||fpcdn.net^

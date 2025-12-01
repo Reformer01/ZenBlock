@@ -633,4 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load settings on startup
   loadSettings();
+  
+  // Load filter lists
+  loadFilterLists();
 });

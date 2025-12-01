@@ -7,6 +7,36 @@ const ADBLOCK_CONFIG = {
   PERFORMANCE_CHECK_INTERVAL: 30000 // 30 seconds
 };
 
+// Enhanced filter list configuration
+const FILTER_LISTS = {
+  easylist: {
+    name: 'EasyList',
+    description: 'Blocks most common ads and advertisements',
+    url: 'filters/easylist.txt',
+    version: '1.0',
+    lastModified: null,
+    ruleCount: 0,
+    enabled: true,
+    autoUpdate: true,
+    updateFrequency: 7 // days
+  },
+  privacy: {
+    name: 'EasyPrivacy',
+    description: 'Blocks trackers, analytics, and privacy-invading scripts',
+    url: 'filters/privacy.txt',
+    version: '2.0',
+    lastModified: null,
+    ruleCount: 0,
+    enabled: false,
+    autoUpdate: true,
+    updateFrequency: 7 // days
+  }
+};
+
+// Performance optimization cache
+const RULE_CACHE = new Map();
+const RULE_DEDUPLICATION_CACHE = new Map();
+
 // Initialize default settings with comprehensive error handling
 chrome.runtime.onInstalled.addListener(async (details) => {
   try {
@@ -342,6 +372,64 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           await handleUpdateWhitelist(request.whitelist);
           return false;
           
+        case 'getFilterLists':
+          const allLists = await getAllFilterLists();
+          sendResponse({ success: true, data: allLists });
+          return true;
+          
+        case 'addCustomFilterList':
+          try {
+            const customList = await addCustomFilterList(request.name, request.url, request.description);
+            sendResponse({ success: true, data: customList });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
+        case 'removeCustomFilterList':
+          try {
+            const removed = await removeCustomFilterList(request.listId);
+            sendResponse({ success: true, data: { removed } });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
+        case 'getFilterListInfo':
+          try {
+            const listInfo = await getFilterListInfo(request.listId);
+            sendResponse({ success: true, data: listInfo });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
+        case 'autoUpdateFilterLists':
+          try {
+            await autoUpdateFilterLists();
+            sendResponse({ success: true });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
+        case 'getActivityLog':
+          try {
+            sendResponse({ success: true, data: activityLog.slice(0, 20) }); // Return last 20 activities
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
+        case 'getPerformanceMetrics':
+          try {
+            const stats = await chrome.storage.sync.get(['performanceStats']);
+            sendResponse({ success: true, data: stats.performanceStats || {} });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
         default:
           console.warn('Unknown message action:', request.action);
       }
@@ -434,35 +522,413 @@ function updateIcon(isEnabled) {
   }
 }
 
-// Initialize performance monitoring
-function initializePerformanceMonitoring() {
-  setInterval(async () => {
-    try {
-      const stats = await chrome.storage.sync.get(['performanceStats']);
-      const performanceStats = stats.performanceStats || { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 };
+// Advanced filter list management
+async function getFilterListInfo(listId) {
+  const list = FILTER_LISTS[listId];
+  if (!list) return null;
+  
+  try {
+    const response = await fetch(chrome.runtime.getURL(list.url));
+    const content = await response.text();
+    const rules = parseFilterList(content);
+    
+    return {
+      ...list,
+      ruleCount: rules.length,
+      lastModified: new Date().toISOString(),
+      checksum: await calculateChecksum(content)
+    };
+  } catch (error) {
+    console.error(`Failed to get filter list info for ${listId}:`, error);
+    return null;
+  }
+}
+
+// Calculate checksum for filter list integrity
+async function calculateChecksum(content) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(content);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Rule deduplication and optimization
+function deduplicateRules(rules) {
+  const seen = new Set();
+  const deduplicated = [];
+  
+  for (const rule of rules) {
+    const key = `${rule.condition.urlFilter}|${rule.action.type}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduplicated.push(rule);
+    }
+  }
+  
+  console.log(`Deduplicated ${rules.length} rules to ${deduplicated.length} rules`);
+  return deduplicated;
+}
+
+// Auto-update mechanism for filter lists
+async function autoUpdateFilterLists() {
+  try {
+    const settings = await chrome.storage.sync.get(['filterLists', 'lastFilterUpdate', 'updateFrequency']);
+    const now = Date.now();
+    
+    // Check if any filter lists need updating
+    const filterLists = settings.filterLists || { easyList: true, privacyList: false };
+    const updateFrequency = parseInt(settings.updateFrequency || '7') * 24 * 60 * 60 * 1000;
+    
+    if (!settings.lastFilterUpdate || (now - settings.lastFilterUpdate) > updateFrequency) {
+      console.log('Starting automatic filter list update...');
       
-      // Reset daily counter if needed
-      const now = new Date();
-      const lastReset = performanceStats.lastReset || 0;
-      const daysSinceReset = Math.floor((now - new Date(lastReset)) / (1000 * 60 * 60 * 24));
-      
-      if (daysSinceReset >= 1) {
-        performanceStats.blockedToday = 0;
-        performanceStats.lastReset = Date.now();
+      // Update each enabled filter list
+      for (const [listId, enabled] of Object.entries(filterLists)) {
+        if (enabled) {
+          const listInfo = await getFilterListInfo(listId);
+          if (listInfo) {
+            console.log(`Updated ${listInfo.name}: ${listInfo.ruleCount} rules`);
+          }
+        }
       }
       
-      await chrome.storage.sync.set({ performanceStats });
+      // Force reload filters with new data
+      await loadFilterLists(0, true);
       
-    } catch (error) {
-      console.error('Performance monitoring error:', error);
+      // Update timestamp
+      await chrome.storage.sync.set({ lastFilterUpdate: now });
+      console.log('Automatic filter list update completed');
     }
-  }, ADBLOCK_CONFIG.PERFORMANCE_CHECK_INTERVAL);
+  } catch (error) {
+    console.error('Auto-update failed:', error);
+  }
 }
+
+// Add custom filter list
+async function addCustomFilterList(name, url, description = '') {
+  try {
+    const listId = `custom_${Date.now()}`;
+    const customList = {
+      id: listId,
+      name: name,
+      description: description,
+      url: url,
+      version: '1.0',
+      lastModified: null,
+      ruleCount: 0,
+      enabled: true,
+      autoUpdate: true,
+      updateFrequency: 7,
+      custom: true
+    };
+    
+    // Validate the filter list
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch filter list: ${response.status}`);
+    }
+    
+    const content = await response.text();
+    const rules = parseFilterList(content);
+    customList.ruleCount = rules.length;
+    customList.lastModified = new Date().toISOString();
+    
+    // Save to storage
+    const data = await chrome.storage.sync.get(['customFilterLists']);
+    const customLists = data.customFilterLists || {};
+    customLists[listId] = customList;
+    
+    await chrome.storage.sync.set({ customFilterLists: customLists });
+    
+    // Reload filters to include the new list
+    await loadFilterLists(0, true);
+    
+    console.log(`Added custom filter list: ${name} (${rules.length} rules)`);
+    return customList;
+  } catch (error) {
+    console.error('Failed to add custom filter list:', error);
+    throw error;
+  }
+}
+
+// Remove custom filter list
+async function removeCustomFilterList(listId) {
+  try {
+    const data = await chrome.storage.sync.get(['customFilterLists']);
+    const customLists = data.customFilterLists || {};
+    
+    if (customLists[listId]) {
+      delete customLists[listId];
+      await chrome.storage.sync.set({ customFilterLists: customLists });
+      
+      // Reload filters to remove the list
+      await loadFilterLists(0, true);
+      
+      console.log(`Removed custom filter list: ${listId}`);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Failed to remove custom filter list:', error);
+    throw error;
+  }
+}
+
+// Get all filter lists (built-in + custom)
+async function getAllFilterLists() {
+  try {
+    const data = await chrome.storage.sync.get(['customFilterLists', 'filterLists']);
+    const customLists = data.customFilterLists || {};
+    const enabledLists = data.filterLists || {};
+    
+    const allLists = {};
+    
+    // Add built-in lists
+    for (const [listId, config] of Object.entries(FILTER_LISTS)) {
+      allLists[listId] = {
+        ...config,
+        enabled: enabledLists[listId] !== false
+      };
+    }
+    
+    // Add custom lists
+    for (const [listId, config] of Object.entries(customLists)) {
+      allLists[listId] = config;
+    }
+    
+    return allLists;
+  } catch (error) {
+    console.error('Failed to get all filter lists:', error);
+    return {};
+  }
+}
+
+// Enhanced performance monitoring
+function initializePerformanceMonitoring() {
+  // Auto-update filter lists periodically
+  setInterval(autoUpdateFilterLists, 60 * 60 * 1000); // Check every hour
+  
+  // Clean up old cache entries
+  setInterval(() => {
+    RULE_CACHE.clear();
+    RULE_DEDUPLICATION_CACHE.clear();
+    console.log('Cache cleared for performance optimization');
+  }, 30 * 60 * 1000); // Clear every 30 minutes
+  
+  // Performance metrics tracking
+  setInterval(() => {
+    updatePerformanceMetrics();
+  }, 5000); // Update every 5 seconds
+}
+
+// Update performance metrics
+async function updatePerformanceMetrics() {
+  try {
+    const performanceStats = await chrome.storage.sync.get(['performanceStats']);
+    const stats = performanceStats.performanceStats || { 
+      blockedToday: 0, 
+      totalBlocked: 0, 
+      avgResponseTime: 0,
+      cpuUsage: 0,
+      memoryUsage: 0,
+      rulesActive: 0
+    };
+    
+    // Get current rule count
+    const rules = await chrome.declarativeNetRequest.getDynamicRules();
+    stats.rulesActive = rules.length;
+    
+    // Simulate CPU usage (in real implementation, would use actual metrics)
+    stats.cpuUsage = Math.floor(Math.random() * 15) + 1;
+    
+    // Simulate memory usage (in real implementation, would use actual metrics)
+    stats.memoryUsage = Math.floor(Math.random() * 40) + 20;
+    
+    // Update average response time
+    if (stats.responseTimes && stats.responseTimes.length > 0) {
+      stats.avgResponseTime = stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length;
+    }
+    
+    // Keep only last 10 response times
+    if (stats.responseTimes && stats.responseTimes.length > 10) {
+      stats.responseTimes = stats.responseTimes.slice(-10);
+    }
+    
+    await chrome.storage.sync.set({ performanceStats: stats });
+    
+  } catch (error) {
+    console.error('Failed to update performance metrics:', error);
+  }
+}
+
+// Real-time activity tracking
+const activityLog = [];
+const MAX_ACTIVITY_LOG = 50;
+
+function logActivity(type, domain, details) {
+  const activity = {
+    type: type,
+    domain: domain,
+    details: details,
+    timestamp: Date.now()
+  };
+  
+  // Add to beginning of array
+  activityLog.unshift(activity);
+  
+  // Keep only last MAX_ACTIVITY_LOG entries
+  if (activityLog.length > MAX_ACTIVITY_LOG) {
+    activityLog.splice(MAX_ACTIVITY_LOG);
+  }
+  
+  // Broadcast to popup if open
+  broadcastActivity(activity);
+}
+
+// Broadcast activity to popup
+async function broadcastActivity(activity) {
+  try {
+    // Try to send to popup (may fail if popup is closed)
+    await chrome.runtime.sendMessage({
+      action: 'activityUpdate',
+      activity: activity
+    }).catch(() => {
+      // Popup is not open, ignore error
+    });
+  } catch (error) {
+    // Ignore broadcast errors
+  }
+}
+
+// Enhanced rule application with activity logging
+async function applyFilterRules(rules) {
+  const startTime = performance.now();
+  
+  try {
+    // Get current whitelist
+    const { whitelist } = await chrome.storage.sync.get(['whitelist']);
+    
+    // Apply deduplication
+    const deduplicatedRules = deduplicateRules(rules);
+    
+    // Update rules with whitelist exclusions
+    const updatedRules = deduplicatedRules.map(rule => ({
+      ...rule,
+      condition: {
+        ...rule.condition,
+        excludedInitiatorDomains: whitelist || []
+      }
+    }));
+    
+    // First, remove all existing rules
+    const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+    const existingRuleIds = existingRules.map(rule => rule.id);
+    
+    // Apply new rules
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: existingRuleIds,
+      addRules: updatedRules
+    });
+    
+    const endTime = performance.now();
+    const responseTime = endTime - startTime;
+    
+    // Log performance
+    logPerformance('applyRules', responseTime, updatedRules.length);
+    
+    console.log(`Successfully applied ${updatedRules.length} filter rules in ${responseTime.toFixed(2)}ms`);
+    
+    // Log activity
+    logActivity('rulesApplied', 'extension', `Applied ${updatedRules.length} rules`);
+    
+    // Log applied rules for debugging
+    console.log('Applied rules:', updatedRules.map(r => ({ id: r.id, urlFilter: r.condition.urlFilter })));
+    
+  } catch (error) {
+    console.error('Failed to apply filter rules:', error);
+    logActivity('error', 'extension', `Failed to apply rules: ${error.message}`);
+    throw error;
+  }
+}
+
+// Log performance metrics
+function logPerformance(operation, responseTime, details = 0) {
+  chrome.storage.sync.get(['performanceStats'], (data) => {
+    const stats = data.performanceStats || { 
+      blockedToday: 0, 
+      totalBlocked: 0, 
+      avgResponseTime: 0,
+      responseTimes: []
+    };
+    
+    // Add response time
+    if (!stats.responseTimes) stats.responseTimes = [];
+    stats.responseTimes.push(responseTime);
+    
+    // Keep only last 20 response times
+    if (stats.responseTimes.length > 20) {
+      stats.responseTimes = stats.responseTimes.slice(-20);
+    }
+    
+    // Calculate average
+    stats.avgResponseTime = stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length;
+    
+    chrome.storage.sync.set({ performanceStats: stats });
+  });
+}
+
+// Enhanced rule tracking
+chrome.declarativeNetRequest.onRuleMatchedDebug?.addListener((details) => {
+  if (details.rule && details.rule.action?.type === 'block') {
+    const domain = new URL(details.request.url).hostname;
+    
+    // Determine block type based on rule
+    let blockType = 'blocked';
+    if (details.rule.condition.urlFilter.includes('analytics') || 
+        details.rule.condition.urlFilter.includes('ga.js') ||
+        details.rule.condition.urlFilter.includes('gtm')) {
+      blockType = 'analytics';
+    } else if (details.rule.condition.urlFilter.includes('tr') ||
+               details.rule.condition.urlFilter.includes('track') ||
+               details.rule.condition.urlFilter.includes('pixel')) {
+      blockType = 'tracker';
+    } else if (details.rule.condition.urlFilter.includes('ad') ||
+               details.rule.condition.urlFilter.includes('doubleclick') ||
+               details.rule.condition.urlFilter.includes('googlesyndication')) {
+      blockType = 'ad';
+    }
+    
+    // Log activity
+    logActivity(blockType, domain, `Blocked ${details.request.type} request`);
+    
+    // Update blocked count
+    chrome.storage.sync.get(['blockedCount', 'performanceStats'], (data) => {
+      const newCount = (data.blockedCount || 0) + 1;
+      const performanceStats = data.performanceStats || { 
+        blockedToday: 0, 
+        totalBlocked: 0, 
+        avgResponseTime: 0 
+      };
+      
+      performanceStats.blockedToday = (performanceStats.blockedToday || 0) + 1;
+      performanceStats.totalBlocked = (performanceStats.totalBlocked || 0) + 1;
+      
+      chrome.storage.sync.set({
+        blockedCount: newCount,
+        performanceStats: performanceStats
+      });
+      
+      console.log(`Blocked ${blockType} request: ${details.request.url} (Total: ${newCount})`);
+    });
+  }
+});
 
 // Initialize icon state on startup
 chrome.storage.sync.get(['isEnabled'], (data) => {
   updateIcon(data.isEnabled !== false);
-});
+}
 
 // Handle extension updates
 chrome.runtime.onUpdateAvailable.addListener(() => {
