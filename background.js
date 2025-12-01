@@ -341,14 +341,17 @@ async function handleGetStats(sendResponse) {
   try {
     const data = await chrome.storage.sync.get(['blockedCount', 'isEnabled', 'performanceStats']);
     const response = {
-      blockedCount: data.blockedCount || 0,
-      isEnabled: data.isEnabled !== false,
-      performanceStats: data.performanceStats || { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 }
+      success: true,
+      data: {
+        blockedCount: data.blockedCount || 0,
+        isEnabled: data.isEnabled !== false,
+        performanceStats: data.performanceStats || { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 }
+      }
     };
     sendResponse(response);
   } catch (error) {
     console.error('Failed to get stats:', error);
-    sendResponse({ blockedCount: 0, isEnabled: true, error: error.message });
+    sendResponse({ success: false, error: error.message });
   }
 }
 
