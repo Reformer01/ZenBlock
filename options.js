@@ -40,8 +40,49 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.sync.set({ theme: newTheme });
   }
 
+  // Toggle switch functionality for form checkboxes
+  function setupToggleSwitches() {
+    const toggleContainers = document.querySelectorAll('.form-checkbox');
+    
+    toggleContainers.forEach(container => {
+      const checkbox = container.querySelector('input[type="checkbox"]');
+      const toggleSwitch = container.querySelector('.toggle-switch');
+      
+      if (checkbox && toggleSwitch) {
+        // Initialize toggle state based on checkbox
+        if (checkbox.checked) {
+          toggleSwitch.classList.add('active');
+        }
+        
+        // Add click handler to toggle switch
+        toggleSwitch.addEventListener('click', () => {
+          checkbox.checked = !checkbox.checked;
+          if (checkbox.checked) {
+            toggleSwitch.classList.add('active');
+          } else {
+            toggleSwitch.classList.remove('active');
+          }
+          // Trigger change event for auto-save
+          checkbox.dispatchEvent(new Event('change'));
+        });
+        
+        // Add change handler to checkbox
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            toggleSwitch.classList.add('active');
+          } else {
+            toggleSwitch.classList.remove('active');
+          }
+        });
+      }
+    });
+  }
+
   // Initialize theme on load
   initTheme();
+
+  // Setup toggle switches
+  setupToggleSwitches();
 
   // Add theme toggle event listener
   if (themeToggle) {
@@ -310,6 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update dashboard stats
       updateDashboardStats(data);
 
+      // Setup toggle switches after loading settings
+      setupToggleSwitches();
+
     } catch (error) {
       console.error('Failed to load settings:', error);
       showError('Failed to load settings. Please refresh the page.');
@@ -331,11 +375,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (existingStats) {
       existingStats.replaceWith(statsContainer);
     } else {
-      const lastSection = document.querySelector('.section:last-child');
+      const lastSection = document.querySelector('.content-section:last-child');
       if (lastSection) {
         lastSection.appendChild(statsContainer);
       } else {
-        console.warn('Cannot find .section:last-child to append performance stats');
+        console.warn('Cannot find .content-section:last-child to append performance stats');
       }
     }
   }

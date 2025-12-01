@@ -68,45 +68,55 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await chrome.runtime.sendMessage({ action: 'getStats' });
       const endTime = performance.now();
       
-      // Load theme preference
-      const themeData = await chrome.storage.sync.get(['theme']);
-      if (themeData.theme) {
-        document.body.setAttribute('data-theme', themeData.theme);
-        localStorage.setItem('zenblock-theme', themeData.theme);
-        updateThemeToggle(themeData.theme);
-      }
-      
-      // Track performance
-      const responseTime = endTime - startTime;
-      performanceStats.responseTimes.push(responseTime);
-      performanceStats.lastUpdateTime = Date.now();
-      
-      // Keep only last 10 response times for average calculation
-      if (performanceStats.responseTimes.length > 10) {
-        performanceStats.responseTimes.shift();
-      }
-      
-      // Update UI
-      if (response.isEnabled) {
-        toggleSwitch.classList.add('active');
+      if (response && response.success) {
+        updateBlockedCount(response.data.blockedCount || 0);
+        
+        // Update toggle state
+        if (response.data.isEnabled !== undefined) {
+          if (response.data.isEnabled) {
+            toggleSwitch.classList.add('active');
+          } else {
+            toggleSwitch.classList.remove('active');
+          }
+        }
+        
+        // Update performance stats
+        if (response.data.performanceStats) {
+          updatePerformanceIndicator(response.data.performanceStats);
+        }
+        
+        // Load theme preference
+        const themeData = await chrome.storage.sync.get(['theme']);
+        if (themeData.theme) {
+          document.body.setAttribute('data-theme', themeData.theme);
+          localStorage.setItem('zenblock-theme', themeData.theme);
+        }
+        
+        // Clear any error indicators
+        clearErrorIndicators();
       } else {
-        toggleSwitch.classList.remove('active');
+        throw new Error(response?.error || 'Failed to get stats');
       }
-      updateBlockedCount(response.blockedCount);
-      
-      // Update performance indicator if needed
-      updatePerformanceIndicator();
-      
     } catch (error) {
       console.error('Failed to load stats:', error);
-      performanceStats.errorCount++;
       
-      // Fallback UI state
-      toggleSwitch.classList.add('active'); // Default to enabled
+      // Set default values on error
       updateBlockedCount(0);
+      toggleSwitch.classList.add('active'); // Default to enabled
       
-      // Show error indicator after multiple failures
-      if (performanceStats.errorCount > 2) {
+      // Try to load theme preference separately
+      try {
+        const themeData = await chrome.storage.sync.get(['theme']);
+        if (themeData.theme) {
+          document.body.setAttribute('data-theme', themeData.theme);
+          localStorage.setItem('zenblock-theme', themeData.theme);
+        }
+      } catch (themeError) {
+        console.error('Failed to load theme:', themeError);
+      }
+      
+      // Only show error indicator if it's not a connection timeout
+      if (!error.message.includes('Extension context invalidated')) {
         showErrorIndicator();
       }
     }
@@ -193,6 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
       errorDiv.className = 'error-indicator';
       footer.appendChild(errorDiv);
     }
+  }
+
+  // Clear error indicators
+  function clearErrorIndicators() {
+    const errorIndicators = document.querySelectorAll('.error-indicator');
+    errorIndicators.forEach(indicator => indicator.remove());
   }
 
   // Toggle ad blocking with validation and feedback
@@ -298,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Debounced stats update to prevent excessive calls
-  const debouncedLoadStats = debounce(loadStats, 1000);
+  const debouncedLoadStats = debounce(loadStats, 3000);
 
   // Event listeners
   toggleSwitch.addEventListener('click', () => {
@@ -329,6 +345,12 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       openOptions();
     }
+    
+    // 'T' to toggle theme
+    if (e.code === 'KeyT' && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      toggleTheme();
+    }
   });
 
   // Auto-update stats with performance consideration
@@ -337,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.visibilityState === 'visible') {
       debouncedLoadStats();
     }
-  }, 5000);
+  }, 10000); // Reduced frequency to every 10 seconds
 
   // Handle visibility changes
   document.addEventListener('visibilitychange', () => {
