@@ -12,7 +12,8 @@ const FILTER_LISTS = {
   easylist: {
     name: 'EasyList',
     description: 'Blocks most common ads and advertisements',
-    url: 'filters/easylist.txt',
+    url: 'https://easylist.to/easylist/easylist.txt',
+    localUrl: 'filters/easylist.txt', // Fallback to local file
     version: '1.0',
     lastModified: null,
     ruleCount: 0,
@@ -23,7 +24,8 @@ const FILTER_LISTS = {
   privacy: {
     name: 'EasyPrivacy',
     description: 'Blocks trackers, analytics, and privacy-invading scripts',
-    url: 'filters/privacy.txt',
+    url: 'https://easylist.to/easylist/easyprivacy.txt',
+    localUrl: 'filters/privacy.txt', // Fallback to local file
     version: '2.0',
     lastModified: null,
     ruleCount: 0,
@@ -109,14 +111,14 @@ async function loadFilterLists(retryCount = 0, force = false) {
       
       if (filterLists.easyList !== false) {
         console.log('Loading EasyList...');
-        filterPromises.push(loadFilterList('easylist.txt'));
+        filterPromises.push(loadFilterList('easylist'));
       } else {
         console.log('EasyList is disabled');
       }
       
       if (filterLists.privacyList === true) {
         console.log('Loading Privacy List...');
-        filterPromises.push(loadFilterList('privacy.txt'));
+        filterPromises.push(loadFilterList('privacy'));
       } else {
         console.log('Privacy List is disabled');
       }
@@ -148,32 +150,270 @@ async function loadFilterLists(retryCount = 0, force = false) {
   }
 }
 
-// Load individual filter list with validation
-async function loadFilterList(filename) {
+// Load individual filter list with remote fetching and fallback
+async function loadFilterList(listKey) {
+  const filterConfig = FILTER_LISTS[listKey];
+  if (!filterConfig) {
+    throw new Error(`Unknown filter list: ${listKey}`);
+  }
+
+  let filterList = null;
+  let source = '';
+
   try {
-    const response = await fetch(chrome.runtime.getURL(`filters/${filename}`));
-    if (!response.ok) {
+    // Try remote URL first
+    console.log(`Fetching ${filterConfig.name} from remote URL...`);
+    const response = await fetch(filterConfig.url, {
+      headers: {
+        'User-Agent': 'ZenBlock/1.0 (+https://github.com/zenblock)'
+      }
+    });
+
+    if (response.ok) {
+      filterList = await response.text();
+      source = `remote (${filterConfig.url})`;
+      
+      // Cache the downloaded list locally
+      try {
+        await chrome.storage.local.set({
+          [`filterCache_${listKey}`]: {
+            data: filterList,
+            timestamp: Date.now(),
+            lastModified: response.headers.get('Last-Modified'),
+            etag: response.headers.get('ETag')
+          }
+        });
+        console.log(`Cached ${filterConfig.name} locally`);
+      } catch (cacheError) {
+        console.warn('Failed to cache filter list:', cacheError);
+      }
+    } else {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+  } catch (remoteError) {
+    console.warn(`Failed to fetch ${filterConfig.name} from remote URL:`, remoteError);
     
-    const filterList = await response.text();
-    if (!filterList || filterList.length < 100) {
-      throw new Error('Filter list appears to be empty or corrupted');
+    // Try to load from cache
+    try {
+      const cached = await chrome.storage.local.get([`filterCache_${listKey}`]);
+      const cacheData = cached[`filterCache_${listKey}`];
+      
+      if (cacheData && cacheData.data) {
+        const cacheAge = Date.now() - cacheData.timestamp;
+        const maxCacheAge = (filterConfig.updateFrequency || 7) * 24 * 60 * 60 * 1000; // days to ms
+        
+        if (cacheAge < maxCacheAge) {
+          filterList = cacheData.data;
+          source = `cache (${Math.round(cacheAge / (60 * 60 * 1000))}h old)`;
+          console.log(`Using cached ${filterConfig.name}`);
+        } else {
+          console.log(`Cached ${filterConfig.name} is too old (${Math.round(cacheAge / (24 * 60 * 60 * 1000))} days)`);
+        }
+      }
+    } catch (cacheError) {
+      console.warn('Failed to load from cache:', cacheError);
     }
     
-    const rules = parseFilterList(filterList);
-    console.log(`Loaded ${rules.length} rules from ${filename}`);
-    return rules;
+    // Fallback to local file if still no data
+    if (!filterList && filterConfig.localUrl) {
+      try {
+        console.log(`Falling back to local file for ${filterConfig.name}...`);
+        const localResponse = await fetch(chrome.runtime.getURL(filterConfig.localUrl));
+        if (localResponse.ok) {
+          filterList = await localResponse.text();
+          source = `local file (${filterConfig.localUrl})`;
+          console.log(`Using local ${filterConfig.name}`);
+        }
+      } catch (localError) {
+        console.warn(`Failed to load local ${filterConfig.name}:`, localError);
+      }
+    }
+  }
+
+  if (!filterList) {
+    throw new Error(`Failed to load ${filterConfig.name} from any source`);
+  }
+
+  // Validate filter list content
+  if (!filterList || filterList.length < 100) {
+    throw new Error(`Filter list ${filterConfig.name} appears to be empty or corrupted`);
+  }
+
+  const rules = parseFilterList(filterList);
+  console.log(`Loaded ${rules.length} rules from ${filterConfig.name} (${source})`);
+  
+  // Update filter list metadata
+  filterConfig.ruleCount = rules.length;
+  filterConfig.lastModified = new Date().toISOString();
+  
+  return rules;
+}
+
+// Parse exception rules (@@||domain^)
+function parseExceptionRule(line, id) {
+  try {
+    const cleanLine = line.substring(2); // Remove @@
     
+    if (cleanLine.startsWith('||') && cleanLine.endsWith('^')) {
+      const domain = cleanLine.substring(2, cleanLine.length - 1);
+      if (isValidFilterDomain(domain)) {
+        return {
+          id: id,
+          priority: 2, // Higher priority for exceptions
+          action: { type: 'allow' },
+          condition: {
+            urlFilter: `||${domain}^`,
+            resourceTypes: [
+              'script', 'image', 'stylesheet', 'object', 'xmlhttprequest',
+              'sub_frame', 'ping', 'csp_report', 'media', 'font', 'websocket', 'other'
+            ]
+          }
+        };
+      }
+    }
   } catch (error) {
-    console.error(`Failed to load filter list ${filename}:`, error);
-    throw error;
+    console.warn('Failed to parse exception rule:', line, error);
+  }
+  return null;
+}
+
+// Parse URL pattern rules (/ads/*, *ad*.js)
+function parseURLPatternRule(line, id) {
+  try {
+    // Convert Adblock Plus pattern to declarativeNetRequest format
+    let urlFilter = line;
+    
+    // Handle wildcards
+    if (urlFilter.includes('*')) {
+      // Convert * to wildcard patterns
+      urlFilter = urlFilter.replace(/\*/g, '*');
+    }
+    
+    // Ensure proper format
+    if (!urlFilter.startsWith('||') && !urlFilter.startsWith('|')) {
+      urlFilter = `*${urlFilter}*`;
+    }
+    
+    return {
+      id: id,
+      priority: 1,
+      action: { type: 'block' },
+      condition: {
+        urlFilter: urlFilter,
+        resourceTypes: ['script', 'image', 'stylesheet', 'object', 'xmlhttprequest']
+      }
+    };
+  } catch (error) {
+    console.warn('Failed to parse URL pattern rule:', line, error);
+  }
+  return null;
+}
+
+// Parse resource type filters ($script, $image, etc.)
+function parseResourceTypeRule(line, id) {
+  try {
+    const parts = line.split('$');
+    if (parts.length !== 2) return null;
+    
+    const pattern = parts[0];
+    const options = parts[1].split(',');
+    
+    // Map Adblock Plus options to declarativeNetRequest resource types
+    const resourceTypeMap = {
+      'script': 'script',
+      'image': 'image',
+      'stylesheet': 'stylesheet',
+      'object': 'object',
+      'xmlhttprequest': 'xmlhttprequest',
+      'sub_frame': 'sub_frame',
+      'ping': 'ping',
+      'csp_report': 'csp_report',
+      'media': 'media',
+      'font': 'font',
+      'websocket': 'websocket',
+      'other': 'other'
+    };
+    
+    const resourceTypes = [];
+    let isImportant = false;
+    let isThirdParty = false;
+    
+    for (const option of options) {
+      const cleanOption = option.trim();
+      
+      if (cleanOption === 'important') {
+        isImportant = true;
+      } else if (cleanOption === 'third-party') {
+        isThirdParty = true;
+      } else if (resourceTypeMap[cleanOption]) {
+        resourceTypes.push(resourceTypeMap[cleanOption]);
+      }
+    }
+    
+    // Default to common resource types if none specified
+    if (resourceTypes.length === 0) {
+      resourceTypes.push('script', 'image', 'stylesheet');
+    }
+    
+    // Convert pattern to URL filter
+    let urlFilter = pattern;
+    if (pattern.startsWith('||')) {
+      urlFilter = pattern; // Keep domain pattern
+    } else if (!urlFilter.includes('*')) {
+      urlFilter = `*${urlFilter}*`;
+    }
+    
+    return {
+      id: id,
+      priority: isImportant ? 3 : 1,
+      action: { type: 'block' },
+      condition: {
+        urlFilter: urlFilter,
+        resourceTypes: resourceTypes,
+        domainType: isThirdParty ? 'thirdParty' : undefined
+      }
+    };
+  } catch (error) {
+    console.warn('Failed to parse resource type rule:', line, error);
+  }
+  return null;
+}
+
+// Parse CSS element hiding rules
+function parseCSSRule(line) {
+  try {
+    // Exception rule (@@example.com##.selector)
+    const isException = line.startsWith('@@');
+    const cleanLine = isException ? line.substring(2) : line;
+    
+    // Split domain and selector
+    const parts = cleanLine.split('##');
+    if (parts.length !== 2) return null;
+    
+    const [domain, selector] = parts;
+    
+    // Validate selector
+    if (!selector || selector.length < 1) return null;
+    
+    return {
+      domain: domain || 'global', // Global rule if no domain specified
+      selector: selector.trim(),
+      isException: isException
+    };
+  } catch (error) {
+    console.warn('Failed to parse CSS rule:', line, error);
+    return null;
   }
 }
 
 // Enhanced filter list parser with comprehensive rule support
 function parseFilterList(filterList) {
   const rules = [];
+  const cssRules = {
+    global: [],
+    domains: {},
+    exceptions: {}
+  };
   const lines = filterList.split('\n');
   let id = 1;
   let ruleCount = 0;
@@ -186,6 +426,57 @@ function parseFilterList(filterList) {
     if (line.length < 3) continue;
     
     try {
+      // Element hiding rules (##selector)
+      if (line.includes('##')) {
+        const cssRule = parseCSSRule(line);
+        if (cssRule) {
+          if (cssRule.isException) {
+            // Exception rule (@@example.com##.selector)
+            if (!cssRules.exceptions[cssRule.domain]) {
+              cssRules.exceptions[cssRule.domain] = [];
+            }
+            cssRules.exceptions[cssRule.domain].push(cssRule.selector);
+          } else {
+            // Regular element hiding rule
+            if (!cssRules.domains[cssRule.domain]) {
+              cssRules.domains[cssRule.domain] = [];
+            }
+            cssRules.domains[cssRule.domain].push(cssRule.selector);
+          }
+        }
+        continue;
+      }
+      
+      // Exception rules (@@||domain^)
+      if (line.startsWith('@@')) {
+        const exceptionRule = parseExceptionRule(line, id++);
+        if (exceptionRule) {
+          rules.push(exceptionRule);
+          ruleCount++;
+        }
+        continue;
+      }
+      
+      // URL pattern matching (/ads/*, *ad*.js)
+      if (line.startsWith('/') && line.includes('/*')) {
+        const urlRule = parseURLPatternRule(line, id++);
+        if (urlRule) {
+          rules.push(urlRule);
+          ruleCount++;
+        }
+        continue;
+      }
+      
+      // Resource type filters ($script, $image, etc.)
+      if (line.includes('$')) {
+        const resourceRule = parseResourceTypeRule(line, id++);
+        if (resourceRule) {
+          rules.push(resourceRule);
+          ruleCount++;
+        }
+        continue;
+      }
+      
       // Basic ad blocking rule (||domain^)
       if (line.startsWith('||') && line.endsWith('^')) {
         const domain = line.substring(2, line.length - 1);
@@ -210,11 +501,6 @@ function parseFilterList(filterList) {
           ruleCount++;
         }
       }
-      // Element hiding rules (##selector)
-      else if (line.includes('##')) {
-        // These would be handled by content scripts
-        continue;
-      }
       
       // Stop if we hit the maximum number of rules
       if (ruleCount >= ADBLOCK_CONFIG.MAX_RULES) {
@@ -226,6 +512,27 @@ function parseFilterList(filterList) {
       console.warn(`Failed to parse filter rule: ${line}`, error);
       continue;
     }
+  }
+  
+  // Store CSS rules separately for content script use
+  if (Object.keys(cssRules.domains).length > 0 || cssRules.global.length > 0) {
+    chrome.storage.local.set({ cssRules: cssRules }).then(() => {
+      console.log(`Stored CSS rules for ${Object.keys(cssRules.domains).length} domains`);
+      
+      // Notify content scripts about updated CSS rules
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          if (tab.url && tab.url.startsWith('http')) {
+            chrome.tabs.sendMessage(tab.id, { 
+              action: 'updateCSS', 
+              cssRules: cssRules 
+            }).catch(() => {
+              // Ignore errors for tabs that don't have content script
+            });
+          }
+        });
+      });
+    });
   }
   
   console.log(`Parsed ${ruleCount} valid rules from ${lines.length} lines`);
@@ -477,10 +784,12 @@ async function handleToggleEnabled(isEnabled) {
     // Enable/disable rules based on state
     if (isEnabled) {
       await loadFilterLists();
+      startStatsTracking(); // Start tracking when enabled
     } else {
       await chrome.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: Array.from({ length: ADBLOCK_CONFIG.MAX_RULES }, (_, i) => i + 1)
       });
+      stopStatsTracking(); // Stop tracking when disabled
     }
     
   } catch (error) {
@@ -740,11 +1049,8 @@ async function updatePerformanceMetrics() {
     const rules = await chrome.declarativeNetRequest.getDynamicRules();
     stats.rulesActive = rules.length;
     
-    // Simulate CPU usage (in real implementation, would use actual metrics)
-    stats.cpuUsage = Math.floor(Math.random() * 15) + 1;
-    
-    // Simulate memory usage (in real implementation, would use actual metrics)
-    stats.memoryUsage = Math.floor(Math.random() * 40) + 20;
+    // CPU and memory usage removed - these were simulated/fake metrics
+    // Real performance monitoring not available in Manifest V3 without additional permissions
     
     // Update average response time
     if (stats.responseTimes && stats.responseTimes.length > 0) {
@@ -879,92 +1185,117 @@ function logPerformance(operation, responseTime, details = 0) {
   });
 }
 
-// Enhanced rule tracking
-chrome.declarativeNetRequest.onRuleMatchedDebug?.addListener((details) => {
-  if (details.rule && details.rule.action?.type === 'block') {
-    const domain = new URL(details.request.url).hostname;
+// Real-time statistics tracking using getMatchedRules API
+let statsTrackingInterval;
+let lastProcessedRules = new Set();
+
+async function trackBlockedRequests() {
+  try {
+    const matchedRules = await chrome.declarativeNetRequest.getMatchedRules();
+    const currentRuleIds = new Set(matchedRules.rulesMatchedInfo.map(rule => rule.ruleId));
     
-    // Determine block type based on rule
-    let blockType = 'blocked';
-    if (details.rule.condition.urlFilter.includes('analytics') || 
-        details.rule.condition.urlFilter.includes('ga.js') ||
-        details.rule.condition.urlFilter.includes('gtm')) {
-      blockType = 'analytics';
-    } else if (details.rule.condition.urlFilter.includes('tr') ||
-               details.rule.condition.urlFilter.includes('track') ||
-               details.rule.condition.urlFilter.includes('pixel')) {
-      blockType = 'tracker';
-    } else if (details.rule.condition.urlFilter.includes('ad') ||
-               details.rule.condition.urlFilter.includes('doubleclick') ||
-               details.rule.condition.urlFilter.includes('googlesyndication')) {
-      blockType = 'ad';
-    }
+    // Find newly matched rules (not processed before)
+    const newRules = matchedRules.rulesMatchedInfo.filter(rule => 
+      !lastProcessedRules.has(rule.ruleId) && rule.action.type === 'block'
+    );
     
-    // Log activity
-    logActivity(blockType, domain, `Blocked ${details.request.type} request`);
-    
-    // Update blocked count
-    chrome.storage.sync.get(['blockedCount', 'performanceStats'], (data) => {
-      const newCount = (data.blockedCount || 0) + 1;
-      const performanceStats = data.performanceStats || { 
+    if (newRules.length > 0) {
+      // Update statistics for new blocked requests
+      const result = await chrome.storage.sync.get(['blockedCount', 'performanceStats', 'domainStats']);
+      const newCount = (result.blockedCount || 0) + newRules.length;
+      const performanceStats = result.performanceStats || { 
         blockedToday: 0, 
         totalBlocked: 0, 
         avgResponseTime: 0 
       };
+      const domainStats = result.domainStats || {};
       
-      performanceStats.blockedToday = (performanceStats.blockedToday || 0) + 1;
-      performanceStats.totalBlocked = (performanceStats.totalBlocked || 0) + 1;
+      // Update performance stats
+      performanceStats.blockedToday = (performanceStats.blockedToday || 0) + newRules.length;
+      performanceStats.totalBlocked = (performanceStats.totalBlocked || 0) + newRules.length;
       
-      chrome.storage.sync.set({
-        blockedCount: newCount,
-        performanceStats: performanceStats
+      // Track per-domain statistics
+      newRules.forEach(rule => {
+        try {
+          const domain = new URL(rule.request.url).hostname;
+          if (!domainStats[domain]) {
+            domainStats[domain] = {
+              count: 0,
+              lastBlocked: Date.now(),
+              firstSeen: Date.now()
+            };
+          }
+          domainStats[domain].count += 1;
+          domainStats[domain].lastBlocked = Date.now();
+          
+          // Determine block type for logging
+          let blockType = 'blocked';
+          if (rule.condition.urlFilter?.includes('analytics') || 
+              rule.condition.urlFilter?.includes('ga.js') ||
+              rule.condition.urlFilter?.includes('gtm')) {
+            blockType = 'analytics';
+          } else if (rule.condition.urlFilter?.includes('tr') ||
+                     rule.condition.urlFilter?.includes('track') ||
+                     rule.condition.urlFilter?.includes('pixel')) {
+            blockType = 'tracker';
+          } else if (rule.condition.urlFilter?.includes('ad') ||
+                     rule.condition.urlFilter?.includes('doubleclick') ||
+                     rule.condition.urlFilter?.includes('googlesyndication')) {
+            blockType = 'ad';
+          }
+          
+          logActivity(blockType, domain, `Blocked ${rule.request.type} request`);
+          console.log(`Blocked ${blockType} request: ${rule.request.url} (Total: ${newCount})`);
+        } catch (e) {
+          console.warn('Failed to parse domain from blocked request:', e);
+        }
       });
       
-      console.log(`Blocked ${blockType} request: ${details.request.url} (Total: ${newCount})`);
-    });
+      // Save updated statistics
+      await chrome.storage.sync.set({
+        blockedCount: newCount,
+        performanceStats: performanceStats,
+        domainStats: domainStats
+      });
+      
+      // Update processed rules set
+      lastProcessedRules = currentRuleIds;
+    }
+  } catch (error) {
+    console.error('Error tracking blocked requests:', error);
   }
-});
+}
 
-// Initialize icon state on startup
+// Start statistics tracking
+function startStatsTracking() {
+  // Track immediately on start
+  trackBlockedRequests();
+  
+  // Then poll every 2 seconds for real-time updates
+  statsTrackingInterval = setInterval(trackBlockedRequests, 2000);
+}
+
+// Stop statistics tracking
+function stopStatsTracking() {
+  if (statsTrackingInterval) {
+    clearInterval(statsTrackingInterval);
+    statsTrackingInterval = null;
+  }
+  lastProcessedRules.clear();
+}
+
+// Initialize icon state and start tracking on startup
 chrome.storage.sync.get(['isEnabled'], (data) => {
   updateIcon(data.isEnabled !== false);
-}
+  
+  // Start statistics tracking if extension is enabled
+  if (data.isEnabled !== false) {
+    startStatsTracking();
+  }
+});
 
 // Handle extension updates
 chrome.runtime.onUpdateAvailable.addListener(() => {
   console.log('Extension update available, preparing for restart');
 });
 
-// Track blocked requests using proper APIs
-chrome.declarativeNetRequest.onRuleMatchedDebug?.addListener((details) => {
-  if (details.rule && details.rule.action?.type === 'block') {
-    chrome.storage.sync.get(['blockedCount', 'performanceStats'], (data) => {
-      const newCount = (data.blockedCount || 0) + 1;
-      const performanceStats = data.performanceStats || { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 };
-      
-      performanceStats.blockedToday = (performanceStats.blockedToday || 0) + 1;
-      performanceStats.totalBlocked = (performanceStats.totalBlocked || 0) + 1;
-      
-      chrome.storage.sync.set({
-        blockedCount: newCount,
-        performanceStats: performanceStats
-      });
-      
-      console.log(`Blocked request: ${details.request.url} (Total: ${newCount})`);
-    });
-  }
-});
-
-// Alternative: Simulate blocking count based on rule application
-let simulatedBlockCount = 0;
-setInterval(() => {
-  // Increment count periodically to simulate blocking
-  simulatedBlockCount += Math.floor(Math.random() * 3) + 1;
-  chrome.storage.sync.get(['blockedCount'], (data) => {
-    const currentCount = data.blockedCount || 0;
-    if (currentCount < simulatedBlockCount) {
-      chrome.storage.sync.set({ blockedCount: simulatedBlockCount });
-      console.log(`Simulated block count updated: ${simulatedBlockCount}`);
-    }
-  });
-}, 5000); // Update every 5 seconds
