@@ -48,8 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Real-time statistics and activity tracking
   let recentActivity = [];
   let performanceData = {
-    cpuUsage: 0,
-    memoryUsage: 0,
     rulesActive: 0,
     avgResponseTime: 0
   };
@@ -94,55 +92,40 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePerformanceData();
   }
 
-  // Update performance metrics
-  function updatePerformanceData() {
-    // Simulate CPU usage (0-15%)
-    performanceData.cpuUsage = Math.floor(Math.random() * 15) + 1;
+// Update performance metrics
+function updatePerformanceData() {
+  // CPU and memory usage removed - these were simulated/fake metrics
+  // Real performance monitoring not available in Manifest V3 without additional permissions
+  
+  // Update only real metrics - rules active
+  chrome.storage.sync.get(['filterLists'], (data) => {
+    const filterLists = data.filterLists || {};
+    let activeRules = 0;
+    if (filterLists.easyList !== false) activeRules += 158; // EasyList rules
+    if (filterLists.privacyList === true) activeRules += 213; // Privacy list rules
+    performanceData.rulesActive = activeRules;
     
-    // Simulate memory usage (20-60MB)
-    performanceData.memoryUsage = Math.floor(Math.random() * 40) + 20;
-    
-    // Get actual rule count from storage or simulate
-    chrome.storage.sync.get(['filterLists'], (data) => {
-      const filterLists = data.filterLists || {};
-      let activeRules = 0;
-      if (filterLists.easyList !== false) activeRules += 158; // EasyList rules
-      if (filterLists.privacyList === true) activeRules += 213; // Privacy list rules
-      performanceData.rulesActive = activeRules;
-      
-      updatePerformanceUI();
-    });
-  }
+    updatePerformanceUI();
+  });
+}
 
-  // Update performance UI elements
-  function updatePerformanceUI() {
-    // Update CPU usage
-    const cpuUsage = document.getElementById('cpuUsage');
-    const cpuValue = document.getElementById('cpuValue');
-    if (cpuUsage && cpuValue) {
-      const cpuPercent = performanceData.cpuUsage;
-      cpuUsage.style.width = cpuPercent + '%';
-      cpuValue.textContent = cpuPercent + '%';
-    }
-    
-    // Update memory usage
-    const memoryUsage = document.getElementById('memoryUsage');
-    const memoryValue = document.getElementById('memoryValue');
-    if (memoryUsage && memoryValue) {
-      const memoryPercent = Math.min((performanceData.memoryUsage / 100) * 100, 100);
-      memoryUsage.style.width = memoryPercent + '%';
-      memoryValue.textContent = performanceData.memoryUsage + 'MB';
-    }
-    
-    // Update rules usage
-    const rulesUsage = document.getElementById('rulesUsage');
-    const rulesValue = document.getElementById('rulesValue');
-    if (rulesUsage && rulesValue) {
-      const rulesPercent = Math.min((performanceData.rulesActive / 500) * 100, 100);
-      rulesUsage.style.width = rulesPercent + '%';
-      rulesValue.textContent = performanceData.rulesActive;
-    }
+// Update performance UI elements
+function updatePerformanceUI() {
+  // CPU and memory usage removed - hide these elements
+  const cpuSection = document.getElementById('cpuUsage')?.parentElement;
+  const memorySection = document.getElementById('memoryUsage')?.parentElement;
+  if (cpuSection) cpuSection.style.display = 'none';
+  if (memorySection) memorySection.style.display = 'none';
+  
+  // Update rules usage only
+  const rulesUsage = document.getElementById('rulesUsage');
+  const rulesValue = document.getElementById('rulesValue');
+  if (rulesUsage && rulesValue) {
+    const rulesPercent = Math.min((performanceData.rulesActive / 500) * 100, 100);
+    rulesUsage.style.width = rulesPercent + '%';
+    rulesValue.textContent = performanceData.rulesActive;
   }
+}
 
   // Add activity to recent activity list
   function addActivity(type, domain, details = '') {
