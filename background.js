@@ -652,6 +652,76 @@ async function applyFallbackRules() {
   }
 }
 
+// Export all settings for backup
+async function exportSettings() {
+  try {
+    // Get all settings from storage
+    const settings = await chrome.storage.sync.get([
+      'isEnabled', 'filterLists', 'whitelist', 'lastFilterUpdate', 
+      'updateFrequency', 'blockedCount', 'performanceStats'
+    ]);
+    
+    // Get filter cache from local storage
+    const cacheData = await chrome.storage.local.get([
+      'filterCache_easylist', 'filterCache_privacy', 'cssRules'
+    ]);
+    
+    // Create export object with metadata
+    const exportData = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      settings: settings,
+      cache: cacheData,
+      metadata: {
+        extension: 'ZenBlock',
+        exportType: 'full_backup'
+      }
+    };
+    
+    console.log('Settings exported successfully');
+    return exportData;
+    
+  } catch (error) {
+    console.error('Failed to export settings:', error);
+    throw error;
+  }
+}
+
+// Import settings from backup
+async function importSettings(importData) {
+  try {
+    // Validate import data structure
+    if (!importData || typeof importData !== 'object') {
+      throw new Error('Invalid import data format');
+    }
+    
+    if (!importData.settings) {
+      throw new Error('Import data missing settings');
+    }
+    
+    // Import settings to sync storage
+    await chrome.storage.sync.set(importData.settings);
+    
+    // Import cache data to local storage if available
+    if (importData.cache) {
+      await chrome.storage.local.set(importData.cache);
+    }
+    
+    // Reload filters with new settings
+    await loadFilterLists(0, true);
+    
+    // Update icon state
+    const isEnabled = importData.settings.isEnabled !== false;
+    updateIcon(isEnabled);
+    
+    console.log('Settings imported successfully');
+    
+  } catch (error) {
+    console.error('Failed to import settings:', error);
+    throw error;
+  }
+}
+
 // Enhanced message handling with validation
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
@@ -732,6 +802,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           try {
             const stats = await chrome.storage.sync.get(['performanceStats']);
             sendResponse({ success: true, data: stats.performanceStats || {} });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
+        case 'exportSettings':
+          try {
+            const exportData = await exportSettings();
+            sendResponse({ success: true, data: exportData });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
+        case 'importSettings':
+          try {
+            await importSettings(request.settings);
+            sendResponse({ success: true });
           } catch (error) {
             sendResponse({ success: false, error: error.message });
           }
