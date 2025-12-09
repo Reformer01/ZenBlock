@@ -825,6 +825,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           }
           return true;
           
+        case 'getDomainStats':
+          try {
+            const result = await chrome.storage.sync.get(['domainStats']);
+            const domainStats = result.domainStats || {};
+            
+            // Sort domains by block count (descending)
+            const sortedDomains = Object.entries(domainStats)
+              .sort(([,a], [,b]) => b.count - a.count)
+              .slice(0, 20) // Top 20 domains
+              .map(([domain, stats]) => ({
+                domain,
+                count: stats.count,
+                lastBlocked: stats.lastBlocked,
+                firstSeen: stats.firstSeen
+              }));
+            
+            sendResponse({ success: true, data: sortedDomains });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          return true;
+          
         default:
           console.warn('Unknown message action:', request.action);
       }
