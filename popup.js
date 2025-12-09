@@ -1,4 +1,4 @@
-// Enhanced popup with performance monitoring and theme support
+
 document.addEventListener('DOMContentLoaded', () => {
   const toggleSwitch = document.getElementById('toggleSwitch');
   const blockedCountElement = document.getElementById('blockedCount');
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const performanceInfo = document.getElementById('performanceInfo');
   const themeToggle = document.getElementById('themeToggle');
 
-  // Theme management
+
   function initTheme() {
     const savedTheme = localStorage.getItem('zenblock-theme') || 'light';
     document.body.setAttribute('data-theme', savedTheme);
@@ -28,37 +28,37 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('zenblock-theme', newTheme);
     updateThemeToggle(newTheme);
     
-    // Save theme preference to extension storage
+
     chrome.storage.sync.set({ theme: newTheme });
   }
 
-  // Initialize theme on load
+
   initTheme();
 
-  // Add theme toggle event listener
+
   if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
   }
 
-  // Get DOM elements for enhanced stats
+
   const todayCountElement = document.getElementById('todayCount');
   const totalSitesElement = document.getElementById('totalSites');
   const avgResponseElement = document.getElementById('avgResponse');
 
-  // Real-time statistics and activity tracking
+
   let recentActivity = [];
   let performanceData = {
     rulesActive: 0,
     avgResponseTime: 0
   };
 
-  // Update blocked count with enhanced statistics
+
   function updateBlockedCount(count) {
     if (typeof count !== 'number' || count < 0) {
       count = 0;
     }
     
-    // Format large numbers with abbreviations
+
     let displayCount = count;
     if (count >= 1000000) {
       displayCount = (count / 1000000).toFixed(1) + 'M';
@@ -70,54 +70,54 @@ document.addEventListener('DOMContentLoaded', () => {
     
     blockedCountElement.textContent = displayCount;
     
-    // Update today's count
-    const todayCount = Math.floor(count * 0.3); // Simulate 30% of blocks are from today
+
+    const todayCount = Math.floor(count * 0.3);
     if (todayCountElement) {
       todayCountElement.textContent = todayCount.toLocaleString();
     }
     
-    // Update total sites (simulate based on blocked count)
-    const totalSites = Math.floor(count / 10); // Assume ~10 blocks per site
+
+    const totalSites = Math.floor(count / 10);
     if (totalSitesElement) {
       totalSitesElement.textContent = totalSites.toLocaleString();
     }
     
-    // Update average response time
-    const avgResponse = Math.floor(Math.random() * 50) + 10; // Simulate 10-60ms response time
+
+    const avgResponse = Math.floor(Math.random() * 50) + 10;
     if (avgResponseElement) {
       avgResponseElement.textContent = avgResponse + 'ms';
     }
     
-    // Update performance data
+
     updatePerformanceData();
   }
 
-// Update performance metrics
+
 function updatePerformanceData() {
-  // CPU and memory usage removed - these were simulated/fake metrics
-  // Real performance monitoring not available in Manifest V3 without additional permissions
+
+
   
-  // Update only real metrics - rules active
+
   chrome.storage.sync.get(['filterLists'], (data) => {
     const filterLists = data.filterLists || {};
     let activeRules = 0;
-    if (filterLists.easyList !== false) activeRules += 158; // EasyList rules
-    if (filterLists.privacyList === true) activeRules += 213; // Privacy list rules
+    if (filterLists.easyList !== false) activeRules += 158;
+    if (filterLists.privacyList === true) activeRules += 213;
     performanceData.rulesActive = activeRules;
     
     updatePerformanceUI();
   });
 }
 
-// Update performance UI elements
+
 function updatePerformanceUI() {
-  // CPU and memory usage removed - hide these elements
+
   const cpuSection = document.getElementById('cpuUsage')?.parentElement;
   const memorySection = document.getElementById('memoryUsage')?.parentElement;
   if (cpuSection) cpuSection.style.display = 'none';
   if (memorySection) memorySection.style.display = 'none';
   
-  // Update rules usage only
+
   const rulesUsage = document.getElementById('rulesUsage');
   const rulesValue = document.getElementById('rulesValue');
   if (rulesUsage && rulesValue) {
@@ -127,7 +127,7 @@ function updatePerformanceUI() {
   }
 }
 
-  // Add activity to recent activity list
+
   function addActivity(type, domain, details = '') {
     const activity = {
       type: type,
@@ -136,10 +136,10 @@ function updatePerformanceUI() {
       timestamp: Date.now()
     };
     
-    // Add to beginning of array
+
     recentActivity.unshift(activity);
     
-    // Keep only last 10 activities
+
     if (recentActivity.length > 10) {
       recentActivity = recentActivity.slice(0, 10);
     }
@@ -147,7 +147,7 @@ function updatePerformanceUI() {
     updateActivityDisplay();
   }
 
-  // Update activity display
+
   function updateActivityDisplay() {
     const activityList = document.getElementById('activityList');
     if (!activityList) return;
@@ -173,7 +173,7 @@ function updatePerformanceUI() {
     });
   }
 
-  // Get user-friendly time ago string
+
   function getTimeAgo(timestamp) {
     const now = Date.now();
     const diff = now - timestamp;
@@ -185,7 +185,7 @@ function updatePerformanceUI() {
     return Math.floor(diff / 86400000) + 'd ago';
   }
 
-  // Get activity text based on type and domain
+
   function getActivityText(activity) {
     const { type, domain, details } = activity;
     
@@ -203,7 +203,7 @@ function updatePerformanceUI() {
     }
   }
 
-  // Simulate real-time blocking activity
+
   function simulateBlockingActivity() {
     const domains = ['google.com', 'facebook.com', 'youtube.com', 'twitter.com', 'amazon.com', 'instagram.com', 'linkedin.com', 'reddit.com'];
     const types = ['blocked', 'tracker', 'analytics', 'ad'];
@@ -216,37 +216,37 @@ function updatePerformanceUI() {
       'Blocked marketing script'
     ];
     
-    // Randomly add activity
-    if (Math.random() > 0.7) { // 30% chance every interval
+
+    if (Math.random() > 0.7) {
       const domain = domains[Math.floor(Math.random() * domains.length)];
       const type = types[Math.floor(Math.random() * types.length)];
       const detail = details[Math.floor(Math.random() * details.length)];
       
       addActivity(type, domain, detail);
       
-      // Increment blocked count
+
       const currentCount = parseInt(blockedCountElement.textContent.replace(/[^0-9]/g, '')) || 0;
       updateBlockedCount(currentCount + 1);
     }
     
-    // Update last update time
+
     const lastUpdate = document.getElementById('lastUpdate');
     if (lastUpdate) {
       lastUpdate.textContent = 'Just now';
     }
   }
 
-  // Enhanced performance indicator
+
   function updatePerformanceIndicator(stats) {
     const indicator = document.getElementById('performanceIndicator');
     if (!indicator) return;
     
-    // Determine performance status based on stats
+
     let status = 'good';
     if (stats.avgResponseTime > 100) status = 'warning';
     if (stats.avgResponseTime > 200) status = 'poor';
     
-    // Update indicator color
+
     const colors = {
       good: 'var(--success-color)',
       warning: 'var(--secondary-color)',
@@ -256,19 +256,19 @@ function updatePerformanceUI() {
     indicator.style.background = colors[status] || colors.good;
   }
 
-  // Initialize real-time updates
+
   function initializeRealtimeUpdates() {
-    // Update performance every 2 seconds
+
     setInterval(() => {
       updatePerformanceData();
     }, 2000);
     
-    // Simulate blocking activity every 3 seconds
+
     setInterval(() => {
       simulateBlockingActivity();
     }, 3000);
     
-    // Update last update time every 30 seconds
+
     setInterval(() => {
       const lastUpdate = document.getElementById('lastUpdate');
       if (lastUpdate && recentActivity.length > 0) {
@@ -278,7 +278,7 @@ function updatePerformanceUI() {
     }, 30000);
   }
 
-  // Debounce function to prevent excessive API calls
+
   function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -291,7 +291,7 @@ function updatePerformanceUI() {
     };
   }
 
-  // Load current state with performance tracking
+
   async function loadStats() {
     const startTime = performance.now();
     
@@ -302,7 +302,7 @@ function updatePerformanceUI() {
       if (response && response.success) {
         updateBlockedCount(response.data.blockedCount || 0);
         
-        // Update toggle state
+
         if (response.data.isEnabled !== undefined) {
           if (response.data.isEnabled) {
             toggleSwitch.classList.add('active');
@@ -311,19 +311,19 @@ function updatePerformanceUI() {
           }
         }
         
-        // Update performance stats
+
         if (response.data.performanceStats) {
           updatePerformanceIndicator(response.data.performanceStats);
         }
         
-        // Load theme preference
+
         const themeData = await chrome.storage.sync.get(['theme']);
         if (themeData.theme) {
           document.body.setAttribute('data-theme', themeData.theme);
           localStorage.setItem('zenblock-theme', themeData.theme);
         }
         
-        // Clear any error indicators
+
         clearErrorIndicators();
       } else {
         throw new Error(response?.error || 'Failed to get stats');
@@ -331,11 +331,11 @@ function updatePerformanceUI() {
     } catch (error) {
       console.error('Failed to load stats:', error);
       
-      // Set default values on error
+
       updateBlockedCount(0);
-      toggleSwitch.classList.add('active'); // Default to enabled
+      toggleSwitch.classList.add('active');
       
-      // Try to load theme preference separately
+
       try {
         const themeData = await chrome.storage.sync.get(['theme']);
         if (themeData.theme) {
@@ -346,20 +346,20 @@ function updatePerformanceUI() {
         console.error('Failed to load theme:', themeError);
       }
       
-      // Only show error indicator if it's not a connection timeout
+
       if (!error.message.includes('Extension context invalidated')) {
         showErrorIndicator();
       }
     }
   }
 
-  // Update blocked count with formatting
+
   function updateBlockedCount(count) {
     if (typeof count !== 'number' || count < 0) {
       count = 0;
     }
     
-    // Format large numbers
+
     let formattedCount;
     if (count >= 1000000) {
       formattedCount = (count / 1000000).toFixed(1) + 'M';
@@ -371,7 +371,7 @@ function updatePerformanceUI() {
     
     blockedCountElement.textContent = formattedCount;
     
-    // Update today count (simplified - uses 30% of total as example)
+
     const todayCount = Math.floor(count * 0.3);
     let formattedToday;
     if (todayCount >= 1000000) {
@@ -387,43 +387,23 @@ function updatePerformanceUI() {
       todayElement.textContent = formattedToday;
     }
     
-    // Update sites count (example calculation)
+
     const sitesCount = Math.floor(count / 10) || 1;
     const sitesElement = document.getElementById('totalSites');
     if (sitesElement) {
       sitesElement.textContent = sitesCount.toLocaleString();
     }
     
-    // Add animation for count changes
+
     blockedCountElement.style.transform = 'scale(1.05)';
     setTimeout(() => {
       blockedCountElement.style.transform = 'scale(1)';
     }, 200);
   }
 
-  // Update performance indicator
-  function updatePerformanceIndicator() {
-    if (performanceStats.responseTimes.length === 0) return;
-    
-    const avgResponseTime = performanceStats.responseTimes.reduce((a, b) => a + b, 0) / performanceStats.responseTimes.length;
-    
-    // Add subtle performance indicator
-    let indicatorColor = '#28a745'; // Green for good performance
-    if (avgResponseTime > 100) {
-      indicatorColor = '#ffc107'; // Yellow for moderate
-    }
-    if (avgResponseTime > 500) {
-      indicatorColor = '#dc3545'; // Red for poor
-    }
-    
-    // Update border color of stats container
-    const statsContainer = document.querySelector('.stats');
-    if (statsContainer) {
-      statsContainer.style.borderColor = indicatorColor;
-    }
-  }
 
-  // Show error indicator
+  
+
   function showErrorIndicator() {
     const errorDiv = document.createElement('div');
     errorDiv.style.cssText = 'color: #dc3545; font-size: 12px; text-align: center; margin-top: 10px;';
@@ -436,46 +416,46 @@ function updatePerformanceUI() {
     }
   }
 
-  // Clear error indicators
+
   function clearErrorIndicators() {
     const errorIndicators = document.querySelectorAll('.error-indicator');
     errorIndicators.forEach(indicator => indicator.remove());
   }
 
-  // Toggle ad blocking with validation and feedback
+
   async function toggleAdBlocking(isEnabled) {
     try {
-      // Validate input
+
       if (typeof isEnabled !== 'boolean') {
         throw new Error('Invalid toggle state');
       }
       
-      // Update UI immediately for better UX
+
       if (isEnabled) {
         toggleSwitch.classList.add('active');
       } else {
         toggleSwitch.classList.remove('active');
       }
       
-      // Show loading state
+
       toggleSwitch.disabled = true;
       
-      // Send message to background script
+
       await chrome.runtime.sendMessage({
         action: 'toggleEnabled',
         isEnabled: isEnabled
       });
       
-      // Update icon immediately for better UX
+
       updateIcon(isEnabled);
       
-      // Show success feedback
+
       showToggleFeedback(isEnabled);
       
     } catch (error) {
       console.error('Failed to toggle ad blocking:', error);
       
-      // Revert UI state
+
       if (isEnabled) {
         toggleSwitch.classList.remove('active');
       } else {
@@ -484,14 +464,14 @@ function updatePerformanceUI() {
       showErrorIndicator();
       
     } finally {
-      // Re-enable toggle
+
       setTimeout(() => {
         toggleSwitch.disabled = false;
       }, 300);
     }
   }
 
-  // Update extension icon
+
   function updateIcon(isEnabled) {
     const logo = document.querySelector('.logo');
     if (logo) {
@@ -500,7 +480,7 @@ function updatePerformanceUI() {
     }
   }
 
-  // Show toggle feedback
+
   function showToggleFeedback(isEnabled) {
     const feedbackDiv = document.createElement('div');
     feedbackDiv.style.cssText = `
@@ -519,21 +499,21 @@ function updatePerformanceUI() {
     
     document.body.appendChild(feedbackDiv);
     
-    // Remove after 2 seconds
+
     setTimeout(() => {
       feedbackDiv.style.animation = 'slideOut 0.3s ease';
       setTimeout(() => feedbackDiv.remove(), 300);
     }, 2000);
   }
 
-  // Open options page with error handling
+
   async function openOptions() {
     try {
       await chrome.runtime.openOptionsPage();
     } catch (error) {
       console.error('Failed to open options:', error);
       
-      // Fallback: try to open in new tab
+
       try {
         const optionsUrl = chrome.runtime.getURL('options.html');
         chrome.tabs.create({ url: optionsUrl });
@@ -544,10 +524,10 @@ function updatePerformanceUI() {
     }
   }
 
-  // Debounced stats update to prevent excessive calls
+
   const debouncedLoadStats = debounce(loadStats, 3000);
 
-  // Event listeners
+
   toggleSwitch.addEventListener('click', () => {
     const isActive = toggleSwitch.classList.contains('active');
     toggleAdBlocking(!isActive);
@@ -555,51 +535,51 @@ function updatePerformanceUI() {
 
   openOptionsButton.addEventListener('click', openOptions);
   
-  // Add event listener for Statistics button
+
   if (viewStatsButton) {
     viewStatsButton.addEventListener('click', () => {
       chrome.tabs.create({ url: chrome.runtime.getURL('options.html#dashboard') });
     });
   }
 
-  // Add keyboard shortcuts
+
   document.addEventListener('keydown', (e) => {
-    // Space to toggle
+
     if (e.code === 'Space' && !toggleSwitch.disabled) {
       e.preventDefault();
       const isActive = toggleSwitch.classList.contains('active');
       toggleAdBlocking(!isActive);
     }
     
-    // 'O' to open options
+
     if (e.code === 'KeyO' && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       openOptions();
     }
     
-    // 'T' to toggle theme
+
     if (e.code === 'KeyT' && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       toggleTheme();
     }
   });
 
-  // Auto-update stats with performance consideration
+
   setInterval(() => {
-    // Only update if popup is visible and not in background
+
     if (document.visibilityState === 'visible') {
       debouncedLoadStats();
     }
-  }, 10000); // Reduced frequency to every 10 seconds
+  }, 10000);
 
-  // Handle visibility changes
+
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      loadStats(); // Load fresh stats when popup becomes visible
+      loadStats();
     }
   });
 
-  // Add CSS animations
+
   const style = document.createElement('style');
   style.textContent = `
     @keyframes slideIn {
@@ -632,21 +612,21 @@ function updatePerformanceUI() {
   `;
   document.head.appendChild(style);
 
-  // Listen for real-time activity updates from background script
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'activityUpdate') {
       const activity = request.activity;
       
-      // Add to recent activity
+
       addActivity(activity.type, activity.domain, activity.details);
       
-      // Increment blocked count if it's a blocking activity
+
       if (['blocked', 'tracker', 'analytics', 'ad'].includes(activity.type)) {
         const currentCount = parseInt(blockedCountElement.textContent.replace(/[^0-9]/g, '')) || 0;
         updateBlockedCount(currentCount + 1);
       }
       
-      // Update last update time
+
       const lastUpdate = document.getElementById('lastUpdate');
       if (lastUpdate) {
         lastUpdate.textContent = 'Just now';
@@ -654,9 +634,9 @@ function updatePerformanceUI() {
     }
   });
 
-  // Initialize real-time updates
+
   initializeRealtimeUpdates();
 
-  // Load initial stats
+
   loadStats();
 });
