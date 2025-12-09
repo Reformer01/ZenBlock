@@ -1,5 +1,5 @@
-// ZenBlock Content Script - Element Hiding and CSS Injection
-// Handles CSS-based element hiding rules (##selector)
+
+
 
 class CSSInjector {
   constructor() {
@@ -17,16 +17,16 @@ class CSSInjector {
     
     console.log(`ZenBlock CSS Injector initialized for ${this.domain}`);
     
-    // Anti-adblock detection setup
+
     this.setupAntiDetection();
     
-    // Get CSS rules from storage
+
     const cssRules = await this.getCSSRules();
     
-    // Inject CSS for current domain
+
     await this.injectCSSRules(cssRules);
     
-    // Set up message listener for dynamic updates
+
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === 'updateCSS') {
         this.injectCSSRules(message.cssRules || {});
@@ -41,19 +41,19 @@ class CSSInjector {
   }
 
   setupAntiDetection() {
-    // YouTube-specific anti-adblock detection
+
     if (this.domain.includes('youtube.com')) {
       this.setupYouTubeAntiDetection();
     }
     
-    // Prevent ad-block detection scripts from detecting our content script
+
     const originalQuerySelector = document.querySelector;
     const originalQuerySelectorAll = document.querySelectorAll;
     
-    // Override common ad-block detection methods
+
     Object.defineProperty(document, 'querySelector', {
       value: function(selector) {
-        // Block queries looking for ad-block detection elements
+
         if (selector.includes('adblock') || 
             selector.includes('adb') || 
             selector.includes('blocker') ||
@@ -69,7 +69,7 @@ class CSSInjector {
     
     Object.defineProperty(document, 'querySelectorAll', {
       value: function(selector) {
-        // Block queries looking for ad-block detection elements
+
         if (selector.includes('adblock') || 
             selector.includes('adb') || 
             selector.includes('blocker') ||
@@ -83,13 +83,13 @@ class CSSInjector {
       }
     });
     
-    // Override getComputedStyle to hide our injected styles
+
     const originalGetComputedStyle = window.getComputedStyle;
     Object.defineProperty(window, 'getComputedStyle', {
       value: function(element, pseudoElt) {
         const style = originalGetComputedStyle.call(this, element, pseudoElt);
         
-        // Hide display:none from our injected styles
+
         if (style && style.display === 'none' && 
             element.id && element.id.startsWith('zenblock-')) {
           const newStyle = new CSSStyleDeclaration();
@@ -107,7 +107,7 @@ class CSSInjector {
       }
     });
     
-    // Prevent detection of injected elements
+
     const originalElementFromPoint = document.elementFromPoint;
     Object.defineProperty(document, 'elementFromPoint', {
       value: function(x, y) {
@@ -121,12 +121,12 @@ class CSSInjector {
   }
 
   setupYouTubeAntiDetection() {
-    // YouTube-specific anti-adblock bypasses
+
     console.log('Setting up YouTube anti-detection');
     
-    // Override YouTube's ad detection functions
+
     if (window.yt && window.yt.config_) {
-      // Disable YouTube's ad blocker detection
+
       Object.defineProperty(window.yt.config_, 'EXPERIMENT_FLAGS', {
         value: {
           ...window.yt.config_.EXPERIMENT_FLAGS,
@@ -138,7 +138,7 @@ class CSSInjector {
       });
     }
     
-    // Block YouTube's ad-related API calls
+
     const originalFetch = window.fetch;
     window.fetch = function(url, options) {
       if (typeof url === 'string' && (
@@ -152,7 +152,7 @@ class CSSInjector {
       return originalFetch.call(this, url, options);
     };
     
-    // Hide YouTube ad containers
+
     const hideYouTubeAds = () => {
       const adSelectors = [
         '.ytp-ad-module',
@@ -178,10 +178,10 @@ class CSSInjector {
       });
     };
     
-    // Run YouTube ad hiding every 2 seconds
+
     setInterval(hideYouTubeAds, 2000);
     
-    // Also run immediately
+
     hideYouTubeAds();
   }
 
@@ -196,10 +196,10 @@ class CSSInjector {
   }
 
   async injectCSSRules(cssRules) {
-    // Remove existing injected styles
+
     this.clearExistingStyles();
 
-    // Collect applicable CSS rules for current domain
+
     const applicableRules = this.getApplicableRules(cssRules);
     
     if (applicableRules.length > 0) {
@@ -208,7 +208,7 @@ class CSSInjector {
       styleElement.id = styleId;
       styleElement.textContent = applicableRules.join('\n');
       
-      // Inject into document head
+
       (document.head || document.documentElement).appendChild(styleElement);
       this.injectedStyles.set(styleId, styleElement);
       
@@ -221,26 +221,26 @@ class CSSInjector {
     const currentDomain = this.domain;
     const currentPath = window.location.pathname;
     
-    // Global CSS rules (no domain specified)
+
     if (cssRules.global) {
       rules.push(...cssRules.global);
     }
     
-    // Domain-specific CSS rules
+
     if (cssRules.domains && cssRules.domains[currentDomain]) {
       rules.push(...cssRules.domains[currentDomain]);
     }
     
-    // Check for exception rules (@@)
+
     const exceptionRules = [];
     if (cssRules.exceptions && cssRules.exceptions[currentDomain]) {
       exceptionRules.push(...cssRules.exceptions[currentDomain]);
     }
     
-    // Filter out rules that have exceptions
+
     return rules.filter(rule => {
       return !exceptionRules.some(exception => {
-        // Simple matching - if exception selector is contained in rule
+
         return rule.includes(exception.replace('@@', ''));
       });
     });
@@ -263,7 +263,7 @@ class CSSInjector {
       });
     });
 
-    // Start observing the entire document
+
     this.domObserver.observe(document.body || document.documentElement, {
       childList: true,
       subtree: true,
@@ -276,12 +276,12 @@ class CSSInjector {
     if (this.processedElements.has(element)) return;
     this.processedElements.add(element);
 
-    // Check if element matches any ad patterns
+
     if (this.isAdElement(element)) {
       this.hideElement(element);
     }
 
-    // Process child elements
+
     element.querySelectorAll('*').forEach(child => {
       if (!this.processedElements.has(child) && this.isAdElement(child)) {
         this.hideElement(child);
@@ -290,17 +290,17 @@ class CSSInjector {
   }
 
   isAdElement(element) {
-    // YouTube-specific ad detection
+
     if (this.domain.includes('youtube.com')) {
       return this.isYouTubeAdElement(element);
     }
     
-    // Check for common ad indicators
+
     const elementId = element.id || '';
-    const elementClass = element.className || '';
+    const elementClass = (element.className && typeof element.className === 'string') ? element.className : (element.className && element.className.toString()) || '';
     const elementTag = element.tagName.toLowerCase();
     
-    // Common ad-related keywords
+
     const adKeywords = [
       'ad', 'ads', 'advertisement', 'banner', 'sponsored', 'promo',
       'popup', 'modal', 'overlay', 'interstitial', 'commercial',
@@ -308,13 +308,13 @@ class CSSInjector {
       'amazon-ads', 'carbonads', 'adsystem', 'adserver'
     ];
 
-    // Check ID and class for ad keywords
+
     const hasAdKeyword = adKeywords.some(keyword => 
       elementId.toLowerCase().includes(keyword) || 
       elementClass.toLowerCase().includes(keyword)
     );
 
-    // Check for common ad container patterns
+
     const adPatterns = [
       /^ad[s]?[-_]?/,
       /[-_]?ad[s]?$/,
@@ -329,18 +329,18 @@ class CSSInjector {
       pattern.test(elementId) || pattern.test(elementClass)
     );
 
-    // Check for suspicious attributes
+
     const hasSuspiciousAttrs = element.hasAttribute('data-ad') ||
                              element.hasAttribute('data-ads') ||
                              element.hasAttribute('data-adunit') ||
                              element.hasAttribute('data-google-ad-id');
 
-    // Check iframe sources
+
     const isAdIframe = elementTag === 'iframe' && 
                       element.src && 
                       adKeywords.some(keyword => element.src.includes(keyword));
 
-    // Check script elements
+
     const isAdScript = elementTag === 'script' && 
                       element.src && 
                       adKeywords.some(keyword => element.src.includes(keyword));
@@ -350,10 +350,10 @@ class CSSInjector {
 
   isYouTubeAdElement(element) {
     const elementId = element.id || '';
-    const elementClass = element.className || '';
+    const elementClass = (element.className && typeof element.className === 'string') ? element.className : (element.className && element.className.toString()) || '';
     const elementTag = element.tagName.toLowerCase();
     
-    // YouTube-specific ad selectors and patterns
+
     const youtubeAdPatterns = [
       'ytp-ad-module',
       'ytp-ad-preview-container',
@@ -367,17 +367,17 @@ class CSSInjector {
       'ytp-ad-button-container'
     ];
     
-    // Check if element matches YouTube ad patterns
+
     const matchesYouTubeAd = youtubeAdPatterns.some(pattern => 
       elementClass.includes(pattern) || elementId.includes(pattern)
     );
     
-    // Check for YouTube ad attributes
+
     const hasYouTubeAdAttrs = element.hasAttribute('data-ad-impression') ||
                              element.hasAttribute('data-ad-skip') ||
                              element.hasAttribute('data-ad-click-tracking');
     
-    // Check for YouTube ad-related IDs
+
     const youtubeAdIds = [
       'player-ads',
       'ad-container',
@@ -386,7 +386,7 @@ class CSSInjector {
     
     const hasYouTubeAdId = youtubeAdIds.includes(elementId);
     
-    // Check for sponsored content indicators
+
     const isSponsored = elementClass.includes('sponsored') ||
                        elementClass.includes('paid-promotion') ||
                        element.textContent && element.textContent.toLowerCase().includes('sponsored');
@@ -407,7 +407,7 @@ class CSSInjector {
       element.style.top = '-9999px';
     }
     
-    // Mark as processed by ZenBlock
+
     element.setAttribute('data-zenblock-hidden', 'true');
   }
 
@@ -432,15 +432,15 @@ class CSSInjector {
   }
 }
 
-// Initialize CSS injector
+
 const cssInjector = new CSSInjector();
 
-// Wait for DOM to be ready
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     cssInjector.init().then(() => {
       cssInjector.observeDOM();
-      // Process existing elements
+
       document.querySelectorAll('*').forEach(element => {
         cssInjector.processNewElement(element);
       });
@@ -449,14 +449,14 @@ if (document.readyState === 'loading') {
 } else {
   cssInjector.init().then(() => {
     cssInjector.observeDOM();
-    // Process existing elements
+
     document.querySelectorAll('*').forEach(element => {
       cssInjector.processNewElement(element);
     });
   });
 }
 
-// Handle navigation changes (SPA support)
+
 let lastUrl = window.location.href;
 new MutationObserver(() => {
   const url = window.location.href;
@@ -467,15 +467,15 @@ new MutationObserver(() => {
   }
 }).observe(document, { subtree: true, childList: true });
 
-// Enhanced anti-detection measures
+
 (() => {
-  // Prevent detection of our content script
+
   Object.defineProperty(window, 'zenblock', {
     value: undefined,
     writable: true
   });
   
-  // Block common ad-block detection scripts
+
   const scriptDetector = setInterval(() => {
     const scripts = document.querySelectorAll('script');
     scripts.forEach(script => {
@@ -489,7 +489,7 @@ new MutationObserver(() => {
     });
   }, 1000);
   
-  // Cleanup after 10 seconds
+
   setTimeout(() => clearInterval(scriptDetector), 10000);
 })();
 

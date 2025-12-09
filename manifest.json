@@ -5,6 +5,7 @@
   "description": "A powerful and secure ad-blocking extension that blocks ads and trackers with robust error handling - ZenBlock",
   "permissions": [
     "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
     "storage",
     "tabs",
     "activeTab"
@@ -13,15 +14,7 @@
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_start",
-      "all_frames": true
-    }
-  ],
-  "action": {
+    "action": {
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

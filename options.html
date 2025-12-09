@@ -785,10 +785,148 @@
       padding-top: 16px;
       border-top: 1px solid var(--border-color);
     }
+
+    /* Per-Site Statistics Table Styles */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  margin: 15px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.stats-table th,
+.stats-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.stats-table th {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-primary);
+  position: sticky;
+  top: 0;
+}
+
+.stats-table tbody tr:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.stats-table .btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+  margin: 0 2px;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .stats-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .stats-table th, 
+  .stats-table td {
+    min-width: 120px;
+  }
+}
+
+/* Site Details Modal Styles */
+.site-details-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.site-info h4 {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.site-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+}
+
+.stat-item .stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.stat-item .stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.recent-activity h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.activity-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  background: var(--bg-primary);
+}
+
+.activity-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item .activity-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+  .site-details-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .site-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
   </style>
 </head>
 <body data-theme="light">
-  <!-- Header -->
+  
   <header class="header">
     <div class="header-title">ZenBlock Settings</div>
     <div class="theme-toggle" id="themeToggle" title="Toggle theme">
@@ -796,9 +934,9 @@
     </div>
   </header>
 
-  <!-- Main Container -->
+  
   <div class="container">
-    <!-- Sidebar Navigation -->
+    
     <nav class="sidebar">
       <a href="#dashboard" class="nav-item active" data-icon="📊" data-section="dashboard">Dashboard</a>
       <a href="#whitelist" class="nav-item" data-icon="🔒" data-section="whitelist">Whitelist</a>
@@ -807,9 +945,9 @@
       <a href="#about" class="nav-item" data-icon="ℹ️" data-section="about">About</a>
     </nav>
 
-    <!-- Main Content -->
+    
     <main class="main-content">
-      <!-- Dashboard Section -->
+      
       <section id="dashboard" class="content-section active">
         <div class="section-header">
           <h1 class="section-title">Dashboard</h1>
@@ -835,19 +973,71 @@
           </div>
         </div>
 
-        <div class="card">
-          <h3 class="card-title" data-icon="📈">Performance Statistics</h3>
-          <div class="performance-stats" id="performanceStats">
-            <h4>Performance Overview</h4>
-            <p>Average response time: <span id="avgResponseTime">0ms</span></p>
-            <p>Total blocked today: <span id="blockedToday">0</span></p>
-            <p>Total blocked all time: <span id="totalBlocked">0</span></p>
-          </div>
-        </div>
-      </section>
-      
+       
+<div class="card">
+  <h3 class="card-title" data-icon="📊">Per-Site Statistics</h3>
+  <p class="card-description">View detailed statistics for blocked content by website</p>
+  
+  <div class="form-group">
+    <label class="form-label" for="siteFilter">Filter by domain:</label>
+    <div class="input-group">
+      <input type="text" id="siteFilter" class="form-input" placeholder="e.g., example.com">
+      <button class="btn btn-secondary" id="clearFilter">Clear</button>
+    </div>
+  </div>
+  
+  <div class="table-responsive">
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Ads Blocked</th>
+          <th>Trackers Blocked</th>
+          <th>Last Blocked</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="siteStatsBody">
+        
+        <tr>
+          <td colspan="5" class="text-center" id="noStatsMessage">
+            <div style="padding: 20px; color: var(--text-muted);">
+              <div style="width: 48px; height: 48px; margin: 0 auto 16px; 
+                         background-image: url('icons/stats.png'); 
+                         background-size: contain; 
+                         background-repeat: no-repeat; 
+                         opacity: 0.5;">
+              </div>
+              <div>No statistics available yet</div>
+              <div style="font-size: 13px; margin-top: 8px;">
+                Visit some websites to see per-site blocking statistics
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="pagination-controls" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <span>Items per page: </span>
+      <select id="itemsPerPage" class="form-select" style="display: inline-block; width: auto; padding: 4px 8px; margin-left: 8px;">
+        <option value="10">10</option>
+        <option value="25" selected>25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+    <div class="pagination-buttons">
+      <button class="btn btn-sm btn-secondary" id="prevPage" disabled>Previous</button>
+      <span id="pageInfo" style="margin: 0 10px;">Page 1 of 1</span>
+      <button class="btn btn-sm btn-secondary" id="nextPage" disabled>Next</button>
+    </div>
+  </div>
+</div>
 
-      <!-- Whitelist Section -->
+      
       <section id="whitelist" class="content-section">
         <div class="section-header">
           <h1 class="section-title">Whitelist Management</h1>
@@ -866,12 +1056,12 @@
         <div class="card">
           <h3 class="card-title" data-icon="📋">Whitelisted Websites</h3>
           <div class="whitelist-list" id="whitelistContainer">
-            <!-- Whitelist items will be added here -->
+            
           </div>
         </div>
       </section>
 
-      <!-- Filters Section -->
+      
       <section id="filters" class="content-section">
         <div class="section-header">
           <h1 class="section-title">Filter Lists</h1>
@@ -904,7 +1094,7 @@
         <div class="card">
           <h3 class="card-title" data-icon="📋">Filter List Management</h3>
           <div class="filter-lists-container" id="filterListsContainer">
-            <!-- Filter lists will be dynamically loaded here -->
+            
           </div>
           
           <div class="form-group">
@@ -930,7 +1120,7 @@
         </div>
       </section>
 
-      <!-- Advanced Section -->
+      
       <section id="advanced" class="content-section">
         <div class="section-header">
           <h1 class="section-title">Advanced Settings</h1>
@@ -959,7 +1149,7 @@
         </div>
       </section>
 
-      <!-- About Section -->
+      
       <section id="about" class="content-section">
         <div class="section-header">
           <h1 class="section-title">About ZenBlock</h1>
@@ -1007,16 +1197,16 @@
     </main>
   </div>
 
-  <!-- Footer -->
+  
   <footer class="footer">
     ZenBlock v1.0.0 • Peaceful & Secure Browsing
   </footer>
 
-  <!-- Messages (Toast notifications) -->
+  
   <div id="savedMessage" class="message message-success" style="display: none;">✓ Settings saved successfully!</div>
   <div id="errorMessage" class="message message-error" style="display: none;"></div>
 
-  <!-- Custom Filter List Modal (Overlay) -->
+  
   <div class="modal" id="customListModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -1042,6 +1232,68 @@
         <button class="btn btn-primary" id="confirmAddList">Add List</button>
       </div>
     </div>
+  </div>
+
+  
+  <div class="modal" id="siteDetailsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Site Statistics Details</h3>
+        <button class="modal-close" id="closeDetailsModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="site-details-container">
+          <div class="site-info">
+            <h4 id="detailsDomain">example.com</h4>
+            <div class="site-stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">Total Blocked:</span>
+                <span class="stat-value" id="detailsTotalBlocked">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Ads Blocked:</span>
+                <span class="stat-value" id="detailsAdsBlocked">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Trackers Blocked:</span>
+                <span class="stat-value" id="detailsTrackersBlocked">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">First Seen:</span>
+                <span class="stat-value" id="detailsFirstSeen">Never</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Last Blocked:</span>
+                <span class="stat-value" id="detailsLastBlocked">Never</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Block Rate:</span>
+                <span class="stat-value" id="detailsBlockRate">0%</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="recent-activity">
+            <h4>Recent Activity</h4>
+            <div id="detailsRecentActivity" class="activity-list">
+              
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="exportSiteData">Export Data</button>
+        <button class="btn btn-danger" id="clearSiteData">Clear All Data</button>
+        <button class="btn btn-primary" id="closeDetailsModalBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    <button class="btn btn-secondary" id="generateSampleData" title="Generate sample data for testing">
+      Generate Sample Data
+    </button>
   </div>
 
   <script src="options.js"></script>

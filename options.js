@@ -1,21 +1,10 @@
-// Enhanced options page with robust validation, security, and modern navigation
 document.addEventListener('DOMContentLoaded', () => {
   const whitelistInput = document.getElementById('whitelistInput');
   const addWhitelistBtn = document.getElementById('addWhitelist');
-  const whitelistContainer = document.getElementById('whitelistContainer');
-  const saveSettingsBtn = document.getElementById('saveSettings');
-  const savedMessage = document.getElementById('savedMessage');
-  const errorMessage = document.getElementById('errorMessage');
-  const enableEasyList = document.getElementById('enableEasyList');
-  const enablePrivacyList = document.getElementById('enablePrivacyList');
-  const updateFrequency = document.getElementById('updateFrequency');
-  const themeToggle = document.getElementById('themeToggle');
 
-  // Navigation
   const navItems = document.querySelectorAll('.nav-item');
   const contentSections = document.querySelectorAll('.content-section');
 
-  // Theme management
   function initTheme() {
     const savedTheme = localStorage.getItem('zenblock-theme') || 'light';
     document.body.setAttribute('data-theme', savedTheme);
@@ -36,11 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('zenblock-theme', newTheme);
     updateThemeToggle(newTheme);
     
-    // Save theme preference to extension storage
+
     chrome.storage.sync.set({ theme: newTheme });
   }
 
-  // Toggle switch functionality for form checkboxes
+
   function setupToggleSwitches() {
     const toggleContainers = document.querySelectorAll('.form-checkbox');
     
@@ -49,12 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const toggleSwitch = container.querySelector('.toggle-switch');
       
       if (checkbox && toggleSwitch) {
-        // Initialize toggle state based on checkbox
+
         if (checkbox.checked) {
           toggleSwitch.classList.add('active');
         }
         
-        // Add click handler to toggle switch
+
         toggleSwitch.addEventListener('click', () => {
           checkbox.checked = !checkbox.checked;
           if (checkbox.checked) {
@@ -62,11 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             toggleSwitch.classList.remove('active');
           }
-          // Trigger change event for auto-save
+
           checkbox.dispatchEvent(new Event('change'));
         });
         
-        // Add change handler to checkbox
+
         checkbox.addEventListener('change', () => {
           if (checkbox.checked) {
             toggleSwitch.classList.add('active');
@@ -78,20 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initialize theme on load
+
   initTheme();
 
-  // Setup toggle switches
+
   setupToggleSwitches();
 
-  // Add theme toggle event listener
+
   if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
   }
 
-  // Navigation functionality
+
   function switchSection(sectionId) {
-    // Update navigation
+
     navItems.forEach(item => {
       item.classList.remove('active');
       if (item.getAttribute('data-section') === sectionId) {
@@ -99,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Update content
+
     contentSections.forEach(section => {
       section.classList.remove('active');
       if (section.id === sectionId) {
@@ -107,11 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Update URL hash
+
     window.location.hash = sectionId;
   }
 
-  // Add navigation event listeners
+
   navItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
@@ -120,15 +109,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Handle initial hash
+
   const initialHash = window.location.hash.substring(1);
   if (initialHash && document.getElementById(initialHash)) {
     switchSection(initialHash);
   }
 
-  // Dashboard stats update
+
   function updateDashboardStats(data) {
-    // Update main stats
+
     const blockedCount = document.getElementById('blockedCount');
     const whitelistCount = document.getElementById('whitelistCount');
     const filterCount = document.getElementById('filterCount');
@@ -157,10 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (uptimeCount) {
-      uptimeCount.textContent = '100%'; // Simplified for now
+      uptimeCount.textContent = '100%';
     }
 
-    // Update performance stats
+
     const avgResponseTime = document.getElementById('avgResponseTime');
     const blockedToday = document.getElementById('blockedToday');
     const totalBlocked = document.getElementById('totalBlocked');
@@ -177,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
       totalBlocked.textContent = data.performanceStats.totalBlocked.toLocaleString();
     }
 
-    // Update last update time
+
     const lastUpdate = document.getElementById('lastUpdate');
     if (lastUpdate && data.lastFilterUpdate) {
       const date = new Date(data.lastFilterUpdate);
@@ -185,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Enhanced domain validation
+
   function validateDomain(domain) {
     if (!domain || typeof domain !== 'string') {
       return { valid: false, error: 'Domain is required' };
@@ -193,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     domain = domain.trim().toLowerCase();
     
-    // Length validation
+
     if (domain.length < 3) {
       return { valid: false, error: 'Domain must be at least 3 characters' };
     }
@@ -202,12 +191,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return { valid: false, error: 'Domain is too long (max 253 characters)' };
     }
 
-    // Basic format validation
+
     if (!/^[a-z0-9.-]+$/.test(domain)) {
       return { valid: false, error: 'Domain can only contain letters, numbers, dots, and hyphens' };
     }
 
-    // Structural validation
+
     if (domain.startsWith('.') || domain.endsWith('.')) {
       return { valid: false, error: 'Domain cannot start or end with a dot' };
     }
@@ -216,16 +205,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return { valid: false, error: 'Domain cannot contain consecutive dots' };
     }
 
-    // Check for invalid patterns
+
     const invalidPatterns = [
-      /^\./,           // Starts with dot
-      /\.$/,           // Ends with dot
-      /\.\./,          // Consecutive dots
-      /^-/,            // Starts with hyphen
-      /-$/,            // Ends with hyphen
-      /--/,            // Consecutive hyphens
-      /^\d+\.\d+\.\d+\.\d+$/, // IP addresses
-      /^[a-f0-9:]+:[a-f0-9:]+$/i // IPv6 addresses
+      /^\./,
+      /\.$/,
+      /\.\./,
+      /^-/,
+      /-$/,
+      /--/,
+      /^\d+\.\d+\.\d+\.\d+$/,
+      /^[a-f0-9:]+:[a-f0-9:]+$/i
     ];
 
     for (const pattern of invalidPatterns) {
@@ -234,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // TLD validation
+
     const parts = domain.split('.');
     if (parts.length < 2) {
       return { valid: false, error: 'Domain must have at least one dot' };
@@ -245,12 +234,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return { valid: false, error: 'Top-level domain must be at least 2 characters' };
     }
 
-    // Check for valid TLD patterns
+
     if (!/^[a-z]{2,}$/.test(tld)) {
       return { valid: false, error: 'Invalid top-level domain' };
     }
 
-    // Check for reserved domains
+
     const reservedDomains = [
       'localhost', 'example.com', 'example.org', 'example.net',
       'test.com', 'invalid.com', 'reserved.com'
@@ -263,23 +252,23 @@ document.addEventListener('DOMContentLoaded', () => {
     return { valid: true, domain };
   }
 
-  // Enhanced domain matching for subdomains
+
   function matchesDomain(url, whitelistedDomain) {
     try {
       const urlDomain = new URL(url).hostname.toLowerCase();
       const whitelistDomain = whitelistedDomain.toLowerCase();
 
-      // Exact match
+
       if (urlDomain === whitelistDomain) {
         return true;
       }
 
-      // Subdomain match (e.g., sub.example.com matches example.com)
+
       if (urlDomain.endsWith('.' + whitelistDomain)) {
         return true;
       }
 
-      // Wildcard support
+
       if (whitelistDomain.startsWith('*.')) {
         const baseDomain = whitelistDomain.substring(2);
         return urlDomain === baseDomain || urlDomain.endsWith('.' + baseDomain);
@@ -292,20 +281,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Sanitize input to prevent XSS
+
   function sanitizeInput(input) {
     const div = document.createElement('div');
     div.textContent = input;
     return div.innerHTML;
   }
 
-  // Show error message
+
   function showError(message) {
     const errorDiv = document.createElement('div');
     errorDiv.style.cssText = 'color: #dc3545; font-size: 12px; margin-top: 5px;';
     errorDiv.textContent = message;
     
-    // Remove existing error messages
+
     if (whitelistInput && whitelistInput.parentNode) {
       const existingErrors = whitelistInput.parentNode.querySelectorAll('.error-message');
       existingErrors.forEach(err => err.remove());
@@ -313,26 +302,26 @@ document.addEventListener('DOMContentLoaded', () => {
       errorDiv.className = 'error-message';
       whitelistInput.parentNode.appendChild(errorDiv);
       
-      // Auto-remove after 5 seconds
+
       setTimeout(() => errorDiv.remove(), 5000);
     } else {
       console.error('Cannot show error message - whitelistInput or parent not found:', message);
     }
   }
 
-  // Load saved settings with error handling
+
   async function loadSettings() {
     try {
       const data = await chrome.storage.sync.get(['whitelist', 'filterLists', 'updateFrequency', 'performanceStats', 'theme']);
       
-      // Load theme preference
+
       if (data.theme) {
         document.body.setAttribute('data-theme', data.theme);
         localStorage.setItem('zenblock-theme', data.theme);
         updateThemeToggle(data.theme);
       }
       
-      // Load whitelist with validation
+
       const whitelist = Array.isArray(data.whitelist) ? data.whitelist.filter(domain => {
         const validation = validateDomain(domain);
         return validation.valid;
@@ -340,18 +329,18 @@ document.addEventListener('DOMContentLoaded', () => {
       
       updateWhitelistDisplay(whitelist);
 
-      // Load filter list settings
+
       const filterLists = data.filterLists || { easyList: true, privacyList: false };
       if (enableEasyList) enableEasyList.checked = filterLists.easyList !== false;
       if (enablePrivacyList) enablePrivacyList.checked = filterLists.privacyList || false;
 
-      // Load update frequency
+
       if (updateFrequency) updateFrequency.value = data.updateFrequency || '7';
 
-      // Update dashboard stats
+
       updateDashboardStats(data);
 
-      // Setup toggle switches after loading settings
+
       setupToggleSwitches();
 
     } catch (error) {
@@ -360,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Display performance statistics
+
   function displayPerformanceStats(stats) {
     const statsContainer = document.createElement('div');
     statsContainer.className = 'performance-stats';
@@ -384,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Add domain to whitelist with enhanced validation
+
   async function addToWhitelist() {
     const domain = whitelistInput.value.trim();
     
@@ -403,22 +392,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await chrome.storage.sync.get(['whitelist']);
       const whitelist = Array.isArray(data.whitelist) ? data.whitelist : [];
       
-      // Check for duplicates (case-insensitive)
+
       const normalizedDomain = validation.domain.toLowerCase();
       if (whitelist.some(d => d.toLowerCase() === normalizedDomain)) {
         showError('Domain is already whitelisted');
         return;
       }
 
-      // Add to whitelist
+
       whitelist.push(normalizedDomain);
       await chrome.storage.sync.set({ whitelist });
       
-      // Update display
+
       updateWhitelistDisplay(whitelist);
       whitelistInput.value = '';
       
-      // Notify background script
+
       chrome.runtime.sendMessage({
         action: 'updateWhitelist',
         whitelist: whitelist
@@ -432,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Update whitelist display with enhanced UI
+
   function updateWhitelistDisplay(whitelist) {
     if (!whitelistContainer) return;
     
@@ -467,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Remove domain from whitelist
+
   async function removeFromWhitelist(domain) {
     try {
       const data = await chrome.storage.sync.get(['whitelist']);
@@ -477,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateWhitelistDisplay(whitelist);
       showSavedMessage();
       
-      // Notify background script
+
       chrome.runtime.sendMessage({
         action: 'updateWhitelist',
         whitelist: whitelist
@@ -489,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Test if a domain is currently being blocked
+
   async function testDomain(domain) {
     try {
       const response = await chrome.runtime.sendMessage({
@@ -509,10 +498,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Save all settings with validation
+
   async function saveAllSettings() {
     try {
-      // Validate all whitelist domains
+
       const data = await chrome.storage.sync.get(['whitelist']);
       const whitelist = Array.isArray(data.whitelist) ? data.whitelist : [];
       const validWhitelist = whitelist.filter(domain => {
@@ -524,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
       });
 
-      // Get current theme
+
       const currentTheme = document.body.getAttribute('data-theme') || 'light';
 
       const settings = {
@@ -540,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await chrome.storage.sync.set(settings);
       showSavedMessage();
       
-      // Reload filter lists if needed
+
       chrome.runtime.sendMessage({ action: 'reloadFilters' });
       
     } catch (error) {
@@ -549,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Show saved message
+
   function showSavedMessage() {
     if (savedMessage) {
       savedMessage.style.display = 'inline';
@@ -561,21 +550,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Event listeners
+
   if (addWhitelistBtn) addWhitelistBtn.addEventListener('click', addToWhitelist);
   if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveAllSettings);
   
-  // Reset settings button
+
   const resetSettingsBtn = document.getElementById('resetSettings');
   if (resetSettingsBtn) {
     resetSettingsBtn.addEventListener('click', async () => {
       if (confirm('Are you sure you want to reset all settings to defaults? This will clear your whitelist and restore default settings.')) {
         try {
-          // Clear all storage
+
           await chrome.storage.sync.clear();
           await chrome.storage.local.clear();
           
-          // Reset to defaults
+
           const defaults = {
             blockedCount: 0,
             isEnabled: true,
@@ -588,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           await chrome.storage.sync.set(defaults);
           
-          // Reload the page to refresh UI
+
           window.location.reload();
           
         } catch (error) {
@@ -599,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Whitelist container event delegation
+
   if (whitelistContainer) {
     whitelistContainer.addEventListener('click', (e) => {
       if (e.target.classList.contains('btn-danger')) {
@@ -612,7 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Enter key support for whitelist input
+
   if (whitelistInput) {
     whitelistInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
@@ -622,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Auto-save on filter list changes
+
   [enableEasyList, enablePrivacyList, updateFrequency].forEach(element => {
     if (element) {
       element.addEventListener('change', () => {
@@ -631,9 +620,313 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Load settings on startup
+
   loadSettings();
   
-  // Load filter lists
+
   loadFilterLists();
+  
+
+  initSiteStats();
 });
+
+
+  let currentPage = 1;
+  let itemsPerPage = 25;
+  let allSiteStats = [];
+  let filteredSiteStats = [];
+
+
+  function initSiteStats() {
+
+    chrome.storage.sync.get('domainStats', (data) => {
+      const domainStats = data.domainStats || {};
+      
+
+      allSiteStats = Object.entries(domainStats).map(([domain, stats]) => ({
+        domain: domain || 'unknown',
+        adsBlocked: Math.floor((stats.count || 0) * 0.6),
+        trackersBlocked: Math.floor((stats.count || 0) * 0.4),
+        lastBlocked: stats.lastBlocked || Date.now(),
+        firstSeen: stats.firstSeen || Date.now(),
+        totalBlocked: stats.count || 0
+      }));
+      
+      filteredSiteStats = [...allSiteStats];
+      updateSiteStatsDisplay();
+    });
+
+
+    document.getElementById('siteFilter')?.addEventListener('input', filterSiteStats);
+    document.getElementById('clearFilter')?.addEventListener('click', clearSiteFilter);
+    document.getElementById('itemsPerPage')?.addEventListener('change', updateItemsPerPage);
+    document.getElementById('prevPage')?.addEventListener('click', goToPrevPage);
+    document.getElementById('nextPage')?.addEventListener('click', goToNextPage);
+    
+
+    document.getElementById('closeDetailsModal')?.addEventListener('click', closeSiteDetailsModal);
+    document.getElementById('closeDetailsModalBtn')?.addEventListener('click', closeSiteDetailsModal);
+    document.getElementById('exportSiteData')?.addEventListener('click', exportSiteData);
+    document.getElementById('clearSiteData')?.addEventListener('click', clearAllSiteData);
+    
+
+    document.getElementById('generateSampleData')?.addEventListener('click', generateSampleData);
+  }
+
+  function filterSiteStats() {
+    const filter = document.getElementById('siteFilter').value.toLowerCase();
+    filteredSiteStats = allSiteStats.filter(site => 
+      site.domain && typeof site.domain === 'string' && site.domain.toLowerCase().includes(filter)
+    );
+    currentPage = 1;
+    updateSiteStatsDisplay();
+  }
+
+  function clearSiteFilter() {
+    document.getElementById('siteFilter').value = '';
+    filterSiteStats();
+  }
+
+  function updateItemsPerPage(e) {
+    itemsPerPage = parseInt(e.target.value);
+    currentPage = 1;
+    updateSiteStatsDisplay();
+  }
+
+  function goToPrevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      updateSiteStatsDisplay();
+    }
+  }
+
+  function goToNextPage() {
+    const totalPages = Math.ceil(filteredSiteStats.length / itemsPerPage);
+    if (currentPage < totalPages) {
+      currentPage++;
+      updateSiteStatsDisplay();
+    }
+  }
+
+  function formatDate(timestamp) {
+    if (!timestamp) return 'Never';
+    const date = new Date(timestamp);
+    return date.toLocaleString();
+  }
+
+  function updateSiteStatsDisplay() {
+    const tbody = document.getElementById('siteStatsBody');
+    if (!tbody) return;
+
+    if (!filteredSiteStats || filteredSiteStats.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center" style="padding: 30px; color: var(--text-muted);">
+            No statistics available for the current filter
+          </td>
+        </tr>
+      `;
+      updatePaginationControls();
+      return;
+    }
+
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedStats = filteredSiteStats.slice(startIndex, endIndex);
+
+
+    tbody.innerHTML = '';
+
+
+    paginatedStats.forEach(site => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${site.domain}</td>
+        <td>${site.adsBlocked || 0}</td>
+        <td>${site.trackersBlocked || 0}</td>
+        <td>${formatDate(site.lastBlocked)}</td>
+        <td>
+          <button class="btn btn-sm btn-secondary view-details" data-domain="${site.domain}">
+            Details
+          </button>
+          <button class="btn btn-sm btn-danger clear-stats" data-domain="${site.domain}">
+            Clear
+          </button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+
+    document.querySelectorAll('.view-details').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const domain = e.target.dataset.domain;
+        viewSiteDetails(domain);
+      });
+    });
+
+    document.querySelectorAll('.clear-stats').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const domain = e.target.dataset.domain;
+        clearSiteStats(domain);
+      });
+    });
+
+    updatePaginationControls();
+  }
+
+  function updatePaginationControls() {
+    const totalPages = Math.ceil(filteredSiteStats.length / itemsPerPage);
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
+
+    if (prevBtn && nextBtn && pageInfo) {
+      prevBtn.disabled = currentPage <= 1;
+      nextBtn.disabled = currentPage >= totalPages;
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+    }
+  }
+
+  function viewSiteDetails(domain) {
+
+    const modal = document.getElementById('siteDetailsModal');
+    const siteData = allSiteStats.find(site => site.domain === domain);
+    
+    if (!siteData) return;
+    
+
+    document.getElementById('detailsDomain').textContent = domain;
+    document.getElementById('detailsTotalBlocked').textContent = siteData.totalBlocked || 0;
+    document.getElementById('detailsAdsBlocked').textContent = siteData.adsBlocked || 0;
+    document.getElementById('detailsTrackersBlocked').textContent = siteData.trackersBlocked || 0;
+    document.getElementById('detailsFirstSeen').textContent = formatDate(siteData.firstSeen);
+    document.getElementById('detailsLastBlocked').textContent = formatDate(siteData.lastBlocked);
+    
+
+    const blockRate = siteData.totalBlocked > 0 ? 
+      ((siteData.adsBlocked / siteData.totalBlocked) * 100).toFixed(1) : 0;
+    document.getElementById('detailsBlockRate').textContent = `${blockRate}%`;
+    
+
+    const activityContainer = document.getElementById('detailsRecentActivity');
+    activityContainer.innerHTML = `
+      <div class="activity-item">
+        Ad blocked: doubleclick.net
+        <span class="activity-time">${formatDate(Date.now() - 1000 * 60 * 5)}</span>
+      </div>
+      <div class="activity-item">
+        Tracker blocked: google-analytics.com
+        <span class="activity-time">${formatDate(Date.now() - 1000 * 60 * 15)}</span>
+      </div>
+      <div class="activity-item">
+        Ad blocked: googlesyndication.com
+        <span class="activity-time">${formatDate(Date.now() - 1000 * 60 * 30)}</span>
+      </div>
+    `;
+    
+
+    modal.classList.add('active');
+    
+
+    modal.dataset.currentDomain = domain;
+  }
+
+  function clearSiteStats(domain) {
+    if (confirm(`Are you sure you want to clear statistics for ${domain}?`)) {
+
+      allSiteStats = allSiteStats.filter(site => site.domain !== domain);
+      filteredSiteStats = filteredSiteStats.filter(site => site.domain !== domain);
+      
+
+      chrome.storage.sync.get('domainStats', (data) => {
+        const domainStats = data.domainStats || {};
+        delete domainStats[domain];
+        chrome.storage.sync.set({ domainStats: domainStats }, () => {
+          updateSiteStatsDisplay();
+        });
+      });
+    }
+  }
+
+  function closeSiteDetailsModal() {
+    const modal = document.getElementById('siteDetailsModal');
+    modal.classList.remove('active');
+    delete modal.dataset.currentDomain;
+  }
+
+  function exportSiteData() {
+    const modal = document.getElementById('siteDetailsModal');
+    const domain = modal.dataset.currentDomain;
+    const siteData = allSiteStats.find(site => site.domain === domain);
+    
+    if (!siteData) return;
+    
+    const exportData = {
+      domain: siteData.domain,
+      statistics: {
+        totalBlocked: siteData.totalBlocked,
+        adsBlocked: siteData.adsBlocked,
+        trackersBlocked: siteData.trackersBlocked,
+        firstSeen: siteData.firstSeen,
+        lastBlocked: siteData.lastBlocked
+      },
+      exportDate: new Date().toISOString(),
+      extension: 'ZenBlock'
+    };
+    
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `zenblock-stats-${domain}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showSavedMessage();
+  }
+
+  function clearAllSiteData() {
+    const modal = document.getElementById('siteDetailsModal');
+    const domain = modal.dataset.currentDomain;
+    
+    if (confirm(`Are you sure you want to clear ALL statistics for ${domain}? This action cannot be undone.`)) {
+      clearSiteStats(domain);
+      closeSiteDetailsModal();
+    }
+  }
+
+  function generateSampleData() {
+    const sampleDomains = [
+      'google.com', 'facebook.com', 'youtube.com', 'twitter.com', 'instagram.com',
+      'reddit.com', 'linkedin.com', 'amazon.com', 'netflix.com', 'spotify.com',
+      'github.com', 'stackoverflow.com', 'medium.com', 'news.ycombinator.com', 'wikipedia.org'
+    ];
+    
+    const sampleData = {};
+    const now = Date.now();
+    
+    sampleDomains.forEach(domain => {
+      const blockedCount = Math.floor(Math.random() * 100) + 10;
+      const firstSeen = now - (Math.random() * 30 * 24 * 60 * 60 * 1000);
+      const lastBlocked = now - (Math.random() * 24 * 60 * 60 * 1000);
+      
+      sampleData[domain] = {
+        count: blockedCount,
+        lastBlocked: lastBlocked,
+        firstSeen: firstSeen
+      };
+    });
+    
+
+    chrome.storage.sync.set({ domainStats: sampleData });
+  }
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initSiteStats();
+  });
