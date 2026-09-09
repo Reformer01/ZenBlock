@@ -407,7 +407,7 @@ function updatePerformanceUI() {
   function showErrorIndicator() {
     const errorDiv = document.createElement('div');
     errorDiv.style.cssText = 'color: #dc3545; font-size: 12px; text-align: center; margin-top: 10px;';
-    errorDiv.textContent = '⚠️ Connection issues detected';
+    errorDiv.innerHTML = '<span class="status-icon status-icon-warning"></span>Connection issues detected';
     
     const footer = document.querySelector('.footer');
     if (footer && !footer.querySelector('.error-indicator')) {
@@ -495,7 +495,9 @@ function updatePerformanceUI() {
       z-index: 1000;
       animation: slideIn 0.3s ease;
     `;
-    feedbackDiv.textContent = isEnabled ? '✓ Ad blocking enabled' : '✗ Ad blocking disabled';
+    feedbackDiv.innerHTML = isEnabled
+      ? '<span class="status-icon status-icon-check"></span>Ad blocking enabled'
+      : '<span class="status-icon status-icon-x"></span>Ad blocking disabled';
     
     document.body.appendChild(feedbackDiv);
     

@@ -477,8 +477,13 @@
 }
 
 .activity-icon.blocked::before {
-  content: "×";
-  font-weight: bold;
+  content: "";
+  display: block;
+  width: 8px;
+  height: 8px;
+  background-color: currentColor;
+  -webkit-mask: url('icons/phosphor/x.svg') center / contain no-repeat;
+  mask: url('icons/phosphor/x.svg') center / contain no-repeat;
 }
 
 .activity-details {
@@ -645,6 +650,36 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+    /* Phosphor status icons (rendered via CSS mask so they follow text color) */
+    .status-icon {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 5px;
+      vertical-align: -1px;
+      background-color: currentColor;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+    }
+
+    .status-icon-warning {
+      -webkit-mask-image: url('icons/phosphor/warning.svg');
+      mask-image: url('icons/phosphor/warning.svg');
+    }
+
+    .status-icon-check {
+      -webkit-mask-image: url('icons/phosphor/check-circle.svg');
+      mask-image: url('icons/phosphor/check-circle.svg');
+    }
+
+    .status-icon-x {
+      -webkit-mask-image: url('icons/phosphor/x-circle.svg');
+      mask-image: url('icons/phosphor/x-circle.svg');
     }
   </style>
 </head>

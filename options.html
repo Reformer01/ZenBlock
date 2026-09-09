@@ -189,29 +189,38 @@
       width: 18px;
       height: 18px;
       margin-right: 12px;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
+      background-color: currentColor;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
     }
 
     .nav-item[data-section="dashboard"]::before {
-      background-image: url('icons/stats.png');
+      -webkit-mask-image: url('icons/phosphor/chart-bar.svg');
+      mask-image: url('icons/phosphor/chart-bar.svg');
     }
 
     .nav-item[data-section="whitelist"]::before {
-      background-image: url('icons/encrypted.png');
+      -webkit-mask-image: url('icons/phosphor/lock-key.svg');
+      mask-image: url('icons/phosphor/lock-key.svg');
     }
 
     .nav-item[data-section="filters"]::before {
-      background-image: url('icons/3d-alarm.png');
+      -webkit-mask-image: url('icons/phosphor/shield-check.svg');
+      mask-image: url('icons/phosphor/shield-check.svg');
     }
 
     .nav-item[data-section="advanced"]::before {
-      background-image: url('icons/adjustable-spanner.png');
+      -webkit-mask-image: url('icons/phosphor/gear-six.svg');
+      mask-image: url('icons/phosphor/gear-six.svg');
     }
 
     .nav-item[data-section="about"]::before {
-      background-image: url('icons/meditation.png');
+      -webkit-mask-image: url('icons/phosphor/info.svg');
+      mask-image: url('icons/phosphor/info.svg');
     }
 
     /* Main Content */
@@ -272,41 +281,53 @@
       width: 20px;
       height: 20px;
       margin-right: 12px;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
+      background-color: currentColor;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
     }
 
-    .card-title[data-icon="📈"]::before {
-      background-image: url('icons/stats.png');
+    .card-title[data-icon="chart-line-up"]::before {
+      -webkit-mask-image: url('icons/phosphor/chart-line-up.svg');
+      mask-image: url('icons/phosphor/chart-line-up.svg');
     }
 
-    .card-title[data-icon="➕"]::before {
-      background-image: url('icons/plus.png');
+    .card-title[data-icon="plus-circle"]::before {
+      -webkit-mask-image: url('icons/phosphor/plus-circle.svg');
+      mask-image: url('icons/phosphor/plus-circle.svg');
     }
 
-    .card-title[data-icon="📋"]::before {
-      background-image: url('icons/to-do-list.png');
+    .card-title[data-icon="clipboard-text"]::before {
+      -webkit-mask-image: url('icons/phosphor/clipboard-text.svg');
+      mask-image: url('icons/phosphor/clipboard-text.svg');
     }
 
-    .card-title[data-icon="🛡️"]::before {
-      background-image: url('icons/encrypted.png');
+    .card-title[data-icon="shield-check"]::before {
+      -webkit-mask-image: url('icons/phosphor/shield-check.svg');
+      mask-image: url('icons/phosphor/shield-check.svg');
     }
 
-    .card-title[data-icon="⏰"]::before {
-      background-image: url('icons/3d-alarm.png');
+    .card-title[data-icon="clock"]::before {
+      -webkit-mask-image: url('icons/phosphor/clock.svg');
+      mask-image: url('icons/phosphor/clock.svg');
     }
 
-    .card-title[data-icon="🔧"]::before {
-      background-image: url('icons/adjustable-spanner.png');
+    .card-title[data-icon="wrench"]::before {
+      -webkit-mask-image: url('icons/phosphor/wrench.svg');
+      mask-image: url('icons/phosphor/wrench.svg');
     }
 
-    .card-title[data-icon="📊"]::before {
-      background-image: url('icons/performance.png');
+    .card-title[data-icon="chart-bar"]::before {
+      -webkit-mask-image: url('icons/phosphor/chart-bar.svg');
+      mask-image: url('icons/phosphor/chart-bar.svg');
     }
 
-    .card-title[data-icon="🧘"]::before {
-      background-image: url('icons/meditation.png');
+    .card-title[data-icon="flower-lotus"]::before {
+      -webkit-mask-image: url('icons/phosphor/flower-lotus.svg');
+      mask-image: url('icons/phosphor/flower-lotus.svg');
     }
 
     .card-description {
@@ -482,6 +503,38 @@
       display: flex;
       gap: 12px;
       margin-top: 24px;
+    }
+
+    /* Phosphor icon helpers (rendered via CSS mask so they follow text color) */
+    .btn-icon-refresh {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+      vertical-align: -2px;
+      background-color: currentColor;
+      -webkit-mask: url('icons/phosphor/arrows-clockwise.svg') center / contain no-repeat;
+      mask: url('icons/phosphor/arrows-clockwise.svg') center / contain no-repeat;
+    }
+
+    .msg-icon {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-right: 8px;
+      vertical-align: -2px;
+      background-color: currentColor;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+    }
+
+    .msg-icon-check {
+      -webkit-mask-image: url('icons/phosphor/check-circle.svg');
+      mask-image: url('icons/phosphor/check-circle.svg');
     }
 
     /* Whitelist Items */
@@ -755,12 +808,22 @@
     .modal-close {
       background: none;
       border: none;
-      font-size: 28px;
       color: var(--text-muted);
       cursor: pointer;
       padding: 0;
       width: 36px;
       height: 36px;
+    }
+
+    .modal-close::before {
+      content: "";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background-color: currentColor;
+      -webkit-mask: url('icons/phosphor/x.svg') center / contain no-repeat;
+      mask: url('icons/phosphor/x.svg') center / contain no-repeat;
+    }
       display: flex;
       align-items: center;
       justify-content: center;
@@ -938,11 +1001,11 @@
   <div class="container">
     
     <nav class="sidebar">
-      <a href="#dashboard" class="nav-item active" data-icon="📊" data-section="dashboard">Dashboard</a>
-      <a href="#whitelist" class="nav-item" data-icon="🔒" data-section="whitelist">Whitelist</a>
-      <a href="#filters" class="nav-item" data-icon="🛡️" data-section="filters">Filter Lists</a>
-      <a href="#advanced" class="nav-item" data-icon="⚙️" data-section="advanced">Advanced</a>
-      <a href="#about" class="nav-item" data-icon="ℹ️" data-section="about">About</a>
+      <a href="#dashboard" class="nav-item active" data-icon="chart-bar" data-section="dashboard">Dashboard</a>
+      <a href="#whitelist" class="nav-item" data-icon="lock-key" data-section="whitelist">Whitelist</a>
+      <a href="#filters" class="nav-item" data-icon="shield-check" data-section="filters">Filter Lists</a>
+      <a href="#advanced" class="nav-item" data-icon="gear-six" data-section="advanced">Advanced</a>
+      <a href="#about" class="nav-item" data-icon="info" data-section="about">About</a>
     </nav>
 
     
@@ -975,7 +1038,7 @@
 
        
 <div class="card">
-  <h3 class="card-title" data-icon="📊">Per-Site Statistics</h3>
+  <h3 class="card-title" data-icon="chart-bar">Per-Site Statistics</h3>
   <p class="card-description">View detailed statistics for blocked content by website</p>
   
   <div class="form-group">
@@ -1045,7 +1108,7 @@
         </div>
 
         <div class="card">
-          <h3 class="card-title" data-icon="➕">Add Website to Whitelist</h3>
+          <h3 class="card-title" data-icon="plus-circle">Add Website to Whitelist</h3>
           <p class="card-description">Add a website domain to exclude from ad blocking</p>
           <div class="input-group">
             <input type="text" id="whitelistInput" class="form-input" placeholder="example.com">
@@ -1054,7 +1117,7 @@
         </div>
 
         <div class="card">
-          <h3 class="card-title" data-icon="📋">Whitelisted Websites</h3>
+          <h3 class="card-title" data-icon="clipboard-text">Whitelisted Websites</h3>
           <div class="whitelist-list" id="whitelistContainer">
             
           </div>
@@ -1069,7 +1132,7 @@
         </div>
 
         <div class="card">
-          <h3 class="card-title" data-icon="🛡️">Ad Blocking Filters</h3>
+          <h3 class="card-title" data-icon="shield-check">Ad Blocking Filters</h3>
           <p class="card-description">Enable or disable specific filter lists</p>
           
           <div class="form-checkbox">
@@ -1092,7 +1155,7 @@
         </div>
 
         <div class="card">
-          <h3 class="card-title" data-icon="📋">Filter List Management</h3>
+          <h3 class="card-title" data-icon="clipboard-text">Filter List Management</h3>
           <div class="filter-lists-container" id="filterListsContainer">
             
           </div>
@@ -1102,13 +1165,13 @@
               <span class="btn-icon">+</span> Add Custom Filter List
             </button>
             <button class="btn btn-secondary" id="updateAllListsBtn">
-              <span class="btn-icon">🔄</span> Update All Lists
+              <span class="btn-icon btn-icon-refresh"></span> Update All Lists
             </button>
           </div>
         </div>
 
         <div class="card">
-          <h3 class="card-title" data-icon="⏰">Update Settings</h3>
+          <h3 class="card-title" data-icon="clock">Update Settings</h3>
           <div class="form-group">
             <label class="form-label" for="updateFrequency">Update Filter Lists:</label>
             <select id="updateFrequency" class="form-select">
@@ -1128,7 +1191,7 @@
         </div>
 
         <div class="card">
-          <h3 class="card-title" data-icon="🔧">System Settings</h3>
+          <h3 class="card-title" data-icon="wrench">System Settings</h3>
           <p class="card-description">Manage extension settings and data</p>
           
           <div class="btn-group">
@@ -1138,7 +1201,7 @@
         </div>
 
         <div class="card">
-          <h3 class="card-title" data-icon="📊">Debug Information</h3>
+          <h3 class="card-title" data-icon="chart-bar">Debug Information</h3>
           <div class="performance-stats">
             <h4>Extension Status</h4>
             <p>Extension version: 1.0.0</p>
@@ -1157,7 +1220,7 @@
         </div>
 
         <div class="card">
-          <h3 class="card-title" data-icon="🧘">ZenBlock v1.0.0</h3>
+          <h3 class="card-title" data-icon="flower-lotus">ZenBlock v1.0.0</h3>
           <p class="card-description">
             ZenBlock is a powerful and secure ad-blocking browser extension that provides peaceful and secure browsing. 
             Built with modern web technologies and focused on user privacy and performance.
@@ -1167,27 +1230,27 @@
             <h4>Features</h4>
             <div class="feature-list">
               <div class="feature-item">
-                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <img src="icons/check.png" alt="Check" class="feature-icon">
                 <span>Efficient ad blocking with declarativeNetRequest</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <img src="icons/check.png" alt="Check" class="feature-icon">
                 <span>Comprehensive filter list support</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <img src="icons/check.png" alt="Check" class="feature-icon">
                 <span>Privacy protection and tracker blocking</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <img src="icons/check.png" alt="Check" class="feature-icon">
                 <span>Performance monitoring and optimization</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <img src="icons/check.png" alt="Check" class="feature-icon">
                 <span>Dark mode and modern UI design</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="✓" class="feature-icon">
+                <img src="icons/check.png" alt="Check" class="feature-icon">
                 <span>Robust error handling and recovery</span>
               </div>
             </div>
@@ -1199,11 +1262,11 @@
 
   
   <footer class="footer">
-    ZenBlock v1.0.0 • Peaceful & Secure Browsing
+    ZenBlock v1.0.0 - Peaceful &amp; Secure Browsing
   </footer>
 
   
-  <div id="savedMessage" class="message message-success" style="display: none;">✓ Settings saved successfully!</div>
+  <div id="savedMessage" class="message message-success" style="display: none;"><span class="msg-icon msg-icon-check"></span>Settings saved successfully!</div>
   <div id="errorMessage" class="message message-error" style="display: none;"></div>
 
   
@@ -1211,7 +1274,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Add Custom Filter List</h3>
-        <button class="modal-close" id="closeModal">×</button>
+        <button class="modal-close" id="closeModal"></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -1239,7 +1302,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Site Statistics Details</h3>
-        <button class="modal-close" id="closeDetailsModal">×</button>
+        <button class="modal-close" id="closeDetailsModal"></button>
       </div>
       <div class="modal-body">
         <div class="site-details-container">
