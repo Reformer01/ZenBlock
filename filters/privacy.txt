@@ -1,12 +1,8 @@
-! Privacy protection filter list - Comprehensive tracking protection
-! Blocks trackers, analytics, and privacy-invading scripts
+! ZenBlock privacy protection fallback rules
+! A curated list of common trackers and analytics, used when remote lists are unavailable.
 !
-! Title: EasyPrivacy
-! Last modified: 2024-12-01
-! Version: 2.0
-! Homepage: https://easylist.to/
-! License: https://easylist.to/pages/licence.html
-
+! Title: ZenBlock Privacy Protection Fallback
+! Version: 1.0
 ! Analytics and tracking services
 ||google-analytics.com^
 ||googletagmanager.com^
@@ -113,19 +109,8 @@
 ||criteo.net^
 ||criteo.com^
 ||adnxs.com^
-||advertising.com^
 
 ! Behavioral advertising
-||advertising.com^
-||advertising2.com^
-||advertising3.com^
-||advertising4.com^
-||advertising5.com^
-||advertising6.com^
-||advertising7.com^
-||advertising8.com^
-||advertising9.com^
-||advertising10.com^
 
 ! Cross-site tracking
 ||doubleclick.net^
@@ -200,13 +185,4 @@
 ||adobe.com/experience-manager^
 
 ! Behavioral targeting
-||behavioralengine.com^
-||behavioraltargeting.com^
-||behavioralads.com^
-||behavioralanalytics.com^
-||behavioralmarketing.com^
-||behavioraltracking.com^
-||behavioraldata.com^
-||behavioralinsights.com^
-||behavioralmetrics.com^
-||behavioraloptimization.com^
+

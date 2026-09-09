@@ -4,9 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const blockedCountElement = document.getElementById('blockedCount');
   const openOptionsButton = document.getElementById('openOptions');
   const viewStatsButton = document.getElementById('viewStats');
-  const performanceInfo = document.getElementById('performanceInfo');
   const themeToggle = document.getElementById('themeToggle');
-
 
   function initTheme() {
     const savedTheme = localStorage.getItem('zenblock-theme') || 'light';
@@ -33,19 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.sync.set({ theme: newTheme });
   }
 
-
   initTheme();
-
 
   if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
   }
 
-
   const todayCountElement = document.getElementById('todayCount');
   const totalSitesElement = document.getElementById('totalSites');
   const avgResponseElement = document.getElementById('avgResponse');
-
 
   let recentActivity = [];
   let performanceData = {
@@ -53,63 +47,20 @@ document.addEventListener('DOMContentLoaded', () => {
     avgResponseTime: 0
   };
 
-
-  function updateBlockedCount(count) {
-    if (typeof count !== 'number' || count < 0) {
-      count = 0;
-    }
-    
-
-    let displayCount = count;
-    if (count >= 1000000) {
-      displayCount = (count / 1000000).toFixed(1) + 'M';
-    } else if (count >= 1000) {
-      displayCount = (count / 1000).toFixed(1) + 'K';
-    } else {
-      displayCount = count.toLocaleString();
-    }
-    
-    blockedCountElement.textContent = displayCount;
-    
-
-    const todayCount = Math.floor(count * 0.3);
-    if (todayCountElement) {
-      todayCountElement.textContent = todayCount.toLocaleString();
-    }
-    
-
-    const totalSites = Math.floor(count / 10);
-    if (totalSitesElement) {
-      totalSitesElement.textContent = totalSites.toLocaleString();
-    }
-    
-
-    const avgResponse = Math.floor(Math.random() * 50) + 10;
-    if (avgResponseElement) {
-      avgResponseElement.textContent = avgResponse + 'ms';
-    }
-    
-
-    updatePerformanceData();
-  }
-
-
 function updatePerformanceData() {
-
-
-  
-
-  chrome.storage.sync.get(['filterLists'], (data) => {
-    const filterLists = data.filterLists || {};
-    let activeRules = 0;
-    if (filterLists.easyList !== false) activeRules += 158;
-    if (filterLists.privacyList === true) activeRules += 213;
-    performanceData.rulesActive = activeRules;
+  chrome.storage.sync.get(['performanceStats'], (data) => {
+    const stored = data.performanceStats || {};
+    performanceData = {
+      rulesActive: stored.rulesActive || 0,
+      avgResponseTime: stored.avgResponseTime || 0,
+      blockedToday: stored.blockedToday || 0,
+      totalBlocked: stored.totalBlocked || 0,
+      totalSites: stored.totalSites || 0
+    };
     
     updatePerformanceUI();
   });
 }
-
 
 function updatePerformanceUI() {
 
@@ -127,7 +78,6 @@ function updatePerformanceUI() {
     rulesValue.textContent = performanceData.rulesActive;
   }
 }
-
 
   function addActivity(type, domain, details = '') {
     const activity = {
@@ -147,7 +97,6 @@ function updatePerformanceUI() {
     
     updateActivityDisplay();
   }
-
 
   function updateActivityDisplay() {
     const activityList = document.getElementById('activityList');
@@ -174,7 +123,6 @@ function updatePerformanceUI() {
     });
   }
 
-
   function getTimeAgo(timestamp) {
     const now = Date.now();
     const diff = now - timestamp;
@@ -185,7 +133,6 @@ function updatePerformanceUI() {
     if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
     return Math.floor(diff / 86400000) + 'd ago';
   }
-
 
   function getActivityText(activity) {
     const { type, domain, details } = activity;
@@ -203,40 +150,6 @@ function updatePerformanceUI() {
         return `Blocked content on ${domain}`;
     }
   }
-
-
-  function simulateBlockingActivity() {
-    const domains = ['google.com', 'facebook.com', 'youtube.com', 'twitter.com', 'amazon.com', 'instagram.com', 'linkedin.com', 'reddit.com'];
-    const types = ['blocked', 'tracker', 'analytics', 'ad'];
-    const details = [
-      'Blocked ad network request',
-      'Blocked tracking script',
-      'Blocked analytics beacon',
-      'Blocked advertising pixel',
-      'Blocked data collection',
-      'Blocked marketing script'
-    ];
-    
-
-    if (Math.random() > 0.7) {
-      const domain = domains[Math.floor(Math.random() * domains.length)];
-      const type = types[Math.floor(Math.random() * types.length)];
-      const detail = details[Math.floor(Math.random() * details.length)];
-      
-      addActivity(type, domain, detail);
-      
-
-      const currentCount = parseInt(blockedCountElement.textContent.replace(/[^0-9]/g, '')) || 0;
-      updateBlockedCount(currentCount + 1);
-    }
-    
-
-    const lastUpdate = document.getElementById('lastUpdate');
-    if (lastUpdate) {
-      lastUpdate.textContent = 'Just now';
-    }
-  }
-
 
   function updatePerformanceIndicator(stats) {
     const indicator = document.getElementById('performanceIndicator');
@@ -257,17 +170,11 @@ function updatePerformanceUI() {
     indicator.style.background = colors[status] || colors.good;
   }
 
-
   function initializeRealtimeUpdates() {
 
     setInterval(() => {
-      updatePerformanceData();
-    }, 2000);
-    
-
-    setInterval(() => {
-      simulateBlockingActivity();
-    }, 3000);
+      loadStats();
+    }, 15000);
     
 
     setInterval(() => {
@@ -278,7 +185,6 @@ function updatePerformanceUI() {
       }
     }, 30000);
   }
-
 
   function debounce(func, wait) {
     let timeout;
@@ -292,12 +198,10 @@ function updatePerformanceUI() {
     };
   }
 
-
   function setToggleState(enabled) {
     toggleSwitch.classList.toggle('active', enabled);
     toggleSwitch.setAttribute('aria-checked', String(enabled));
   }
-
 
   async function loadStats() {
     const startTime = performance.now();
@@ -307,7 +211,13 @@ function updatePerformanceUI() {
       const endTime = performance.now();
       
       if (response && response.success) {
-        updateBlockedCount(response.data.blockedCount || 0);
+        const perfStats = response.data.performanceStats || {};
+        if (typeof response.data.totalSites === 'number') {
+          perfStats.totalSites = response.data.totalSites;
+        } else if (typeof perfStats.totalSites !== 'number') {
+          perfStats.totalSites = 0;
+        }
+        updateBlockedCount(response.data.blockedCount || 0, perfStats);
         
 
         if (response.data.isEnabled !== undefined) {
@@ -332,7 +242,6 @@ function updatePerformanceUI() {
         throw new Error(response?.error || 'Failed to get stats');
       }
     } catch (error) {
-      console.error('Failed to load stats:', error);
       
 
       updateBlockedCount(0);
@@ -345,9 +254,7 @@ function updatePerformanceUI() {
           document.body.setAttribute('data-theme', themeData.theme);
           localStorage.setItem('zenblock-theme', themeData.theme);
         }
-      } catch (themeError) {
-        console.error('Failed to load theme:', themeError);
-      }
+      } catch (themeError) {}
       
 
       if (!error.message.includes('Extension context invalidated')) {
@@ -356,56 +263,47 @@ function updatePerformanceUI() {
     }
   }
 
-
-  function updateBlockedCount(count) {
+  function updateBlockedCount(count, stats) {
     if (typeof count !== 'number' || count < 0) {
       count = 0;
     }
-    
+    const safeStats = stats && typeof stats === 'object' ? stats : {};
 
-    let formattedCount;
-    if (count >= 1000000) {
-      formattedCount = (count / 1000000).toFixed(1) + 'M';
-    } else if (count >= 1000) {
-      formattedCount = (count / 1000).toFixed(1) + 'K';
-    } else {
-      formattedCount = count.toLocaleString();
-    }
-    
-    blockedCountElement.textContent = formattedCount;
-    
+    const formatCount = (value) => {
+      if (value >= 1000000) {
+        return (value / 1000000).toFixed(1) + 'M';
+      } else if (value >= 1000) {
+        return (value / 1000).toFixed(1) + 'K';
+      }
+      return value.toLocaleString();
+    };
 
-    const todayCount = Math.floor(count * 0.3);
-    let formattedToday;
-    if (todayCount >= 1000000) {
-      formattedToday = (todayCount / 1000000).toFixed(1) + 'M';
-    } else if (todayCount >= 1000) {
-      formattedToday = (todayCount / 1000).toFixed(1) + 'K';
-    } else {
-      formattedToday = todayCount.toLocaleString();
-    }
-    
+    const totalBlocked = typeof safeStats.totalBlocked === 'number' ? safeStats.totalBlocked : count;
+    blockedCountElement.textContent = formatCount(totalBlocked);
+
     const todayElement = document.getElementById('todayCount');
     if (todayElement) {
-      todayElement.textContent = formattedToday;
+      const today = typeof safeStats.blockedToday === 'number' ? safeStats.blockedToday : 0;
+      todayElement.textContent = formatCount(today);
     }
-    
 
-    const sitesCount = Math.floor(count / 10) || 1;
     const sitesElement = document.getElementById('totalSites');
     if (sitesElement) {
-      sitesElement.textContent = sitesCount.toLocaleString();
+      const siteCount = typeof safeStats.totalSites === 'number' ? safeStats.totalSites : 0;
+      sitesElement.textContent = siteCount.toLocaleString();
     }
-    
+
+    const avgElement = document.getElementById('avgResponse');
+    if (avgElement) {
+      const avg = typeof safeStats.avgResponseTime === 'number' ? safeStats.avgResponseTime : 0;
+      avgElement.textContent = avg >= 1000 ? (avg / 1000).toFixed(1) + 's' : Math.round(avg) + 'ms';
+    }
 
     blockedCountElement.style.transform = 'scale(1.05)';
     setTimeout(() => {
       blockedCountElement.style.transform = 'scale(1)';
     }, 200);
   }
-
-
-  
 
   function showErrorIndicator() {
     const errorDiv = document.createElement('div');
@@ -419,12 +317,10 @@ function updatePerformanceUI() {
     }
   }
 
-
   function clearErrorIndicators() {
     const errorIndicators = document.querySelectorAll('.error-indicator');
     errorIndicators.forEach(indicator => indicator.remove());
   }
-
 
   async function toggleAdBlocking(isEnabled) {
     try {
@@ -456,7 +352,6 @@ function updatePerformanceUI() {
       showToggleFeedback(isEnabled);
       
     } catch (error) {
-      console.error('Failed to toggle ad blocking:', error);
       
 
       if (isEnabled) {
@@ -474,7 +369,6 @@ function updatePerformanceUI() {
     }
   }
 
-
   function updateIcon(isEnabled) {
     const logo = document.querySelector('.logo');
     if (logo) {
@@ -482,7 +376,6 @@ function updatePerformanceUI() {
       logo.style.filter = isEnabled ? 'none' : 'grayscale(100%)';
     }
   }
-
 
   function showToggleFeedback(isEnabled) {
     const feedbackDiv = document.createElement('div');
@@ -511,27 +404,22 @@ function updatePerformanceUI() {
     }, 2000);
   }
 
-
   async function openOptions() {
     try {
       await chrome.runtime.openOptionsPage();
     } catch (error) {
-      console.error('Failed to open options:', error);
       
 
       try {
         const optionsUrl = chrome.runtime.getURL('options.html');
         chrome.tabs.create({ url: optionsUrl });
       } catch (fallbackError) {
-        console.error('Fallback failed:', fallbackError);
-        alert('Unable to open settings. Please try again.');
+        showErrorIndicator();
       }
     }
   }
 
-
   const debouncedLoadStats = debounce(loadStats, 3000);
-
 
   toggleSwitch.addEventListener('click', () => {
     const isActive = toggleSwitch.classList.contains('active');
@@ -546,7 +434,6 @@ function updatePerformanceUI() {
       chrome.tabs.create({ url: chrome.runtime.getURL('options.html#dashboard') });
     });
   }
-
 
   toggleSwitch.addEventListener('keydown', (e) => {
     if (e.code === 'Space' || e.code === 'Enter') {
@@ -571,7 +458,6 @@ function updatePerformanceUI() {
     }
   });
 
-
   setInterval(() => {
 
     if (document.visibilityState === 'visible') {
@@ -579,13 +465,11 @@ function updatePerformanceUI() {
     }
   }, 10000);
 
-
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       loadStats();
     }
   });
-
 
   const style = document.createElement('style');
   style.textContent = `
@@ -619,19 +503,13 @@ function updatePerformanceUI() {
   `;
   document.head.appendChild(style);
 
-
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'activityUpdate') {
       const activity = request.activity;
       
 
       addActivity(activity.type, activity.domain, activity.details);
-      
-
-      if (['blocked', 'tracker', 'analytics', 'ad'].includes(activity.type)) {
-        const currentCount = parseInt(blockedCountElement.textContent.replace(/[^0-9]/g, '')) || 0;
-        updateBlockedCount(currentCount + 1);
-      }
+      loadStats();
       
 
       const lastUpdate = document.getElementById('lastUpdate');
@@ -641,9 +519,7 @@ function updatePerformanceUI() {
     }
   });
 
-
   initializeRealtimeUpdates();
-
 
   loadStats();
 });

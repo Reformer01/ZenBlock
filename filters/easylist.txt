@@ -1,11 +1,8 @@
-! EasyList filter list - Sample for AdBlock Pro
-! This is a simplified version for demonstration
-! 
-! Title: EasyList
-! Last modified: Today
+! ZenBlock fallback ad-blocking rules
+! A curated list of common ad-serving domains, used when remote lists are unavailable.
+!
+! Title: ZenBlock Ad Blocking Fallback
 ! Version: 1.0
-! Homepage: https://easylist.to/
-
 ! General ad blocking rules
 ||doubleclick.net^
 ||googlesyndication.com^
@@ -116,9 +113,6 @@
 ||logrocket.com^
 
 ! Malvertising protection
-||malvertising.example^
-||malware.example^
-||virus.example^
 
 ! Generic ad containers
 ##.ad
@@ -155,3 +149,4 @@
 ##iframe[src*="googleadservices"]
 ##iframe[src*="facebook.com/tr"]
 ##iframe[src*="amazon-adsystem"]
+

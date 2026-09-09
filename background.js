@@ -1,12 +1,13 @@
 
 const ADBLOCK_CONFIG = {
   MAX_RULES: 30000,
-  CACHE_DURATION: 3600000,
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 5000,
-  PERFORMANCE_CHECK_INTERVAL: 30000
+  STATS_TRACKING_INTERVAL: 60000,
+  ALARM_STATS: 'zenblock-stats-tracking',
+  ALARM_PERF: 'zenblock-performance-metrics',
+  ALARM_AUTO_UPDATE: 'zenblock-auto-update'
 };
-
 
 const FILTER_LISTS = {
   easylist: {
@@ -35,14 +36,8 @@ const FILTER_LISTS = {
   }
 };
 
-
-const RULE_CACHE = new Map();
-const RULE_DEDUPLICATION_CACHE = new Map();
-
-
 chrome.runtime.onInstalled.addListener(async (details) => {
   try {
-    console.log('ZenBlock installation detected:', details.reason);
     
     const defaults = {
       blockedCount: 0,
@@ -65,28 +60,19 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     
     if (Object.keys(updates).length > 0) {
       await chrome.storage.sync.set(updates);
-      console.log('Default settings initialized:', Object.keys(updates));
     }
     
 
-    // Temporarily disabled to prevent page loading issues
-    // await loadFilterLists();
-    
-
-    // await applyFallbackRules();
-    
+    await loadFilterLists();
 
     initializePerformanceMonitoring();
-    
+
   } catch (error) {
-    console.error('Installation initialization failed:', error);
 
     await chrome.storage.sync.set({ isEnabled: true, blockedCount: 0 });
-
-    // await applyFallbackRules();
+    await applyFallbackRules();
   }
 });
-
 
 async function loadFilterLists(retryCount = 0, force = false) {
   try {
@@ -99,29 +85,21 @@ async function loadFilterLists(retryCount = 0, force = false) {
       privacyList: false
     };
     
-    console.log('Loading filter lists with settings:', filterLists);
     
 
     const shouldUpdate = force || !settings.lastFilterUpdate || 
                         (now - settings.lastFilterUpdate) > (parseInt(settings.updateFrequency || '7') * 24 * 60 * 60 * 1000);
     
     if (shouldUpdate || retryCount > 0) {
-      console.log(`Loading filter lists (attempt ${retryCount + 1}, force: ${force})`);
       
       const filterPromises = [];
       
       if (filterLists.easyList !== false) {
-        console.log('Loading EasyList...');
         filterPromises.push(loadFilterList('easylist'));
-      } else {
-        console.log('EasyList is disabled');
       }
-      
+
       if (filterLists.privacyList === true) {
-        console.log('Loading Privacy List...');
         filterPromises.push(loadFilterList('privacy'));
-      } else {
-        console.log('Privacy List is disabled');
       }
       
       const results = await Promise.allSettled(filterPromises);
@@ -131,26 +109,20 @@ async function loadFilterLists(retryCount = 0, force = false) {
         const allRules = successfulFilters.flat();
         await applyFilterRules(allRules);
         await chrome.storage.sync.set({ lastFilterUpdate: now });
-        console.log(`Successfully loaded ${allRules.length} filter rules from ${successfulFilters.length} filter lists`);
       } else {
         throw new Error('No filter lists loaded successfully');
       }
-    } else {
-      console.log('Filter lists recently updated, skipping reload');
     }
-    
+
   } catch (error) {
-    console.error(`Filter list loading failed (attempt ${retryCount + 1}):`, error);
     
     if (retryCount < ADBLOCK_CONFIG.RETRY_ATTEMPTS) {
       setTimeout(() => loadFilterLists(retryCount + 1, force), ADBLOCK_CONFIG.RETRY_DELAY);
     } else {
-      console.error('All filter list loading attempts failed, using fallback rules');
       await applyFallbackRules();
     }
   }
 }
-
 
 async function loadFilterList(listKey) {
   const filterConfig = FILTER_LISTS[listKey];
@@ -163,7 +135,6 @@ async function loadFilterList(listKey) {
 
   try {
 
-    console.log(`Fetching ${filterConfig.name} from remote URL...`);
     const response = await fetch(filterConfig.url, {
       headers: {
         'User-Agent': 'ZenBlock/1.0 (+https://github.com/zenblock)'
@@ -184,15 +155,11 @@ async function loadFilterList(listKey) {
             etag: response.headers.get('ETag')
           }
         });
-        console.log(`Cached ${filterConfig.name} locally`);
-      } catch (cacheError) {
-        console.warn('Failed to cache filter list:', cacheError);
-      }
+      } catch (cacheError) {}
     } else {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
   } catch (remoteError) {
-    console.warn(`Failed to fetch ${filterConfig.name} from remote URL:`, remoteError);
     
 
     try {
@@ -206,28 +173,20 @@ async function loadFilterList(listKey) {
         if (cacheAge < maxCacheAge) {
           filterList = cacheData.data;
           source = `cache (${Math.round(cacheAge / (60 * 60 * 1000))}h old)`;
-          console.log(`Using cached ${filterConfig.name}`);
         } else {
-          console.log(`Cached ${filterConfig.name} is too old (${Math.round(cacheAge / (24 * 60 * 60 * 1000))} days)`);
         }
       }
-    } catch (cacheError) {
-      console.warn('Failed to load from cache:', cacheError);
-    }
+    } catch (cacheError) {}
     
 
     if (!filterList && filterConfig.localUrl) {
       try {
-        console.log(`Falling back to local file for ${filterConfig.name}...`);
         const localResponse = await fetch(chrome.runtime.getURL(filterConfig.localUrl));
         if (localResponse.ok) {
           filterList = await localResponse.text();
           source = `local file (${filterConfig.localUrl})`;
-          console.log(`Using local ${filterConfig.name}`);
         }
-      } catch (localError) {
-        console.warn(`Failed to load local ${filterConfig.name}:`, localError);
-      }
+      } catch (localError) {}
     }
   }
 
@@ -235,13 +194,11 @@ async function loadFilterList(listKey) {
     throw new Error(`Failed to load ${filterConfig.name} from any source`);
   }
 
-
   if (!filterList || filterList.length < 100) {
     throw new Error(`Filter list ${filterConfig.name} appears to be empty or corrupted`);
   }
 
   const rules = parseFilterList(filterList);
-  console.log(`Loaded ${rules.length} rules from ${filterConfig.name} (${source})`);
   
 
   filterConfig.ruleCount = rules.length;
@@ -249,7 +206,6 @@ async function loadFilterList(listKey) {
   
   return rules;
 }
-
 
 function parseExceptionRule(line, id) {
   try {
@@ -272,12 +228,9 @@ function parseExceptionRule(line, id) {
         };
       }
     }
-  } catch (error) {
-    console.warn('Failed to parse exception rule:', line, error);
-  }
+  } catch (error) {}
   return null;
 }
-
 
 function parseURLPatternRule(line, id) {
   try {
@@ -304,12 +257,9 @@ function parseURLPatternRule(line, id) {
         resourceTypes: ['script', 'image', 'stylesheet', 'object', 'xmlhttprequest']
       }
     };
-  } catch (error) {
-    console.warn('Failed to parse URL pattern rule:', line, error);
-  }
+  } catch (error) {}
   return null;
 }
-
 
 function parseResourceTypeRule(line, id) {
   try {
@@ -374,12 +324,9 @@ function parseResourceTypeRule(line, id) {
         domainType: isThirdParty ? 'thirdParty' : undefined
       }
     };
-  } catch (error) {
-    console.warn('Failed to parse resource type rule:', line, error);
-  }
+  } catch (error) {}
   return null;
 }
-
 
 function parseCSSRule(line) {
   try {
@@ -402,11 +349,9 @@ function parseCSSRule(line) {
       isException: isException
     };
   } catch (error) {
-    console.warn('Failed to parse CSS rule:', line, error);
     return null;
   }
 }
-
 
 function parseFilterList(filterList) {
   const rules = [];
@@ -505,55 +450,21 @@ function parseFilterList(filterList) {
       
 
       if (ruleCount >= ADBLOCK_CONFIG.MAX_RULES) {
-        console.warn(`Reached maximum rule limit (${ADBLOCK_CONFIG.MAX_RULES}), stopping parsing`);
         break;
       }
       
     } catch (error) {
-      console.warn(`Failed to parse filter rule: ${line}`, error);
       continue;
     }
   }
   
 
   if (Object.keys(cssRules.domains).length > 0 || cssRules.global.length > 0) {
-    chrome.storage.local.set({ cssRules: cssRules }).then(() => {
-      console.log(`Stored CSS rules for ${Object.keys(cssRules.domains).length} domains`);
-      
-
-      chrome.tabs.query({}, (tabs) => {
-        tabs.forEach(tab => {
-          if (tab.url && tab.url.startsWith('http')) {
-            chrome.tabs.sendMessage(tab.id, { 
-              action: 'updateCSS', 
-              cssRules: cssRules 
-            }).catch(() => {
-
-            });
-          }
-        });
-      });
-    });
+    try { chrome.storage.local.set({ cssRules: cssRules }).catch(() => {}); } catch (e) {}
   }
   
-  console.log(`Parsed ${ruleCount} valid rules from ${lines.length} lines`);
   return rules;
 }
-
-
-function createBlockRule(id, domain, resourceTypes) {
-  return {
-    id: id,
-    priority: 1,
-    action: { type: 'block' },
-    condition: {
-      urlFilter: `||${domain}^`,
-      resourceTypes: resourceTypes,
-      excludedInitiatorDomains: []
-    }
-  };
-}
-
 
 function createComprehensiveBlockRule(id, domain) {
   return {
@@ -581,7 +492,6 @@ function createComprehensiveBlockRule(id, domain) {
   };
 }
 
-
 function isValidFilterDomain(domain) {
   if (!domain || domain.length < 3) return false;
   if (domain.length > 253) return false;
@@ -592,43 +502,6 @@ function isValidFilterDomain(domain) {
          !domain.endsWith('.') &&
          !domain.includes('..');
 }
-
-
-async function applyFilterRules(rules) {
-  try {
-
-    const { whitelist } = await chrome.storage.sync.get(['whitelist']);
-    
-
-    const updatedRules = rules.map(rule => ({
-      ...rule,
-      condition: {
-        ...rule.condition,
-        excludedInitiatorDomains: whitelist || []
-      }
-    }));
-    
-
-    const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-    const existingRuleIds = existingRules.map(rule => rule.id);
-    
-
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: existingRuleIds,
-      addRules: updatedRules
-    });
-    
-    console.log(`Successfully applied ${updatedRules.length} filter rules (removed ${existingRuleIds.length} existing rules)`);
-    
-
-    console.log('Applied rules:', updatedRules.map(r => ({ id: r.id, urlFilter: r.condition.urlFilter })));
-    
-  } catch (error) {
-    console.error('Failed to apply filter rules:', error);
-    throw error;
-  }
-}
-
 
 async function applyFallbackRules() {
   try {
@@ -646,83 +519,9 @@ async function applyFallbackRules() {
     ];
     
     await applyFilterRules(fallbackRules);
-    console.log('Applied comprehensive fallback filter rules');
     
-  } catch (error) {
-    console.error('Failed to apply fallback rules:', error);
-  }
+  } catch (error) {}
 }
-
-
-async function exportSettings() {
-  try {
-
-    const settings = await chrome.storage.sync.get([
-      'isEnabled', 'filterLists', 'whitelist', 'lastFilterUpdate', 
-      'updateFrequency', 'blockedCount', 'performanceStats'
-    ]);
-    
-
-    const cacheData = await chrome.storage.local.get([
-      'filterCache_easylist', 'filterCache_privacy', 'cssRules'
-    ]);
-    
-
-    const exportData = {
-      version: '1.0',
-      timestamp: new Date().toISOString(),
-      settings: settings,
-      cache: cacheData,
-      metadata: {
-        extension: 'ZenBlock',
-        exportType: 'full_backup'
-      }
-    };
-    
-    console.log('Settings exported successfully');
-    return exportData;
-    
-  } catch (error) {
-    console.error('Failed to export settings:', error);
-    throw error;
-  }
-}
-
-
-async function importSettings(importData) {
-  try {
-
-    if (!importData || typeof importData !== 'object') {
-      throw new Error('Invalid import data format');
-    }
-    
-    if (!importData.settings) {
-      throw new Error('Import data missing settings');
-    }
-    
-
-    await chrome.storage.sync.set(importData.settings);
-    
-
-    if (importData.cache) {
-      await chrome.storage.local.set(importData.cache);
-    }
-    
-
-    await loadFilterLists(0, true);
-    
-
-    const isEnabled = importData.settings.isEnabled !== false;
-    updateIcon(isEnabled);
-    
-    console.log('Settings imported successfully');
-    
-  } catch (error) {
-    console.error('Failed to import settings:', error);
-    throw error;
-  }
-}
-
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
@@ -750,11 +549,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           await handleUpdateWhitelist(request.whitelist);
           return false;
           
-        case 'getFilterLists':
-          const allLists = await getAllFilterLists();
-          sendResponse({ success: true, data: allLists });
-          return true;
-          
         case 'addCustomFilterList':
           try {
             const customList = await addCustomFilterList(request.name, request.url, request.description);
@@ -773,87 +567,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           }
           return true;
           
-        case 'getFilterListInfo':
-          try {
-            const listInfo = await getFilterListInfo(request.listId);
-            sendResponse({ success: true, data: listInfo });
-          } catch (error) {
-            sendResponse({ success: false, error: error.message });
-          }
-          return true;
-          
-        case 'autoUpdateFilterLists':
-          try {
-            await autoUpdateFilterLists();
-            sendResponse({ success: true });
-          } catch (error) {
-            sendResponse({ success: false, error: error.message });
-          }
-          return true;
-          
-        case 'getActivityLog':
-          try {
-            sendResponse({ success: true, data: activityLog.slice(0, 20) });
-          } catch (error) {
-            sendResponse({ success: false, error: error.message });
-          }
-          return true;
-          
-        case 'getPerformanceMetrics':
-          try {
-            const stats = await chrome.storage.sync.get(['performanceStats']);
-            sendResponse({ success: true, data: stats.performanceStats || {} });
-          } catch (error) {
-            sendResponse({ success: false, error: error.message });
-          }
-          return true;
-          
-        case 'exportSettings':
-          try {
-            const exportData = await exportSettings();
-            sendResponse({ success: true, data: exportData });
-          } catch (error) {
-            sendResponse({ success: false, error: error.message });
-          }
-          return true;
-          
-        case 'importSettings':
-          try {
-            await importSettings(request.settings);
-            sendResponse({ success: true });
-          } catch (error) {
-            sendResponse({ success: false, error: error.message });
-          }
-          return true;
-          
-        case 'getDomainStats':
-          try {
-            const result = await chrome.storage.sync.get(['domainStats']);
-            const domainStats = result.domainStats || {};
-            
-
-            const sortedDomains = Object.entries(domainStats)
-              .sort(([,a], [,b]) => b.count - a.count)
-              .slice(0, 20)
-              .map(([domain, stats]) => ({
-                domain,
-                count: stats.count,
-                lastBlocked: stats.lastBlocked,
-                firstSeen: stats.firstSeen
-              }));
-            
-            sendResponse({ success: true, data: sortedDomains });
-          } catch (error) {
-            sendResponse({ success: false, error: error.message });
-          }
-          return true;
-          
         default:
-          console.warn('Unknown message action:', request.action);
       }
       
     } catch (error) {
-      console.error('Message handling error:', error);
       if (sendResponse) sendResponse({ error: error.message });
     }
     
@@ -863,25 +580,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
-
 async function handleGetStats(sendResponse) {
   try {
-    const data = await chrome.storage.sync.get(['blockedCount', 'isEnabled', 'performanceStats']);
+    const data = await chrome.storage.sync.get(['blockedCount', 'isEnabled', 'performanceStats', 'domainStats']);
     const response = {
       success: true,
       data: {
         blockedCount: data.blockedCount || 0,
         isEnabled: data.isEnabled !== false,
-        performanceStats: data.performanceStats || { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 }
+        performanceStats: data.performanceStats || { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 },
+        totalSites: Object.keys(data.domainStats || {}).length
       }
     };
     sendResponse(response);
   } catch (error) {
-    console.error('Failed to get stats:', error);
     sendResponse({ success: false, error: error.message });
   }
 }
-
 
 async function handleToggleEnabled(isEnabled) {
   try {
@@ -903,11 +618,8 @@ async function handleToggleEnabled(isEnabled) {
       stopStatsTracking();
     }
     
-  } catch (error) {
-    console.error('Failed to toggle enabled state:', error);
-  }
+  } catch (error) {}
 }
-
 
 async function handleUpdateWhitelist(whitelist) {
   try {
@@ -925,54 +637,17 @@ async function handleUpdateWhitelist(whitelist) {
     await chrome.storage.sync.set({ whitelist: validWhitelist });
     await loadFilterLists();
     
-  } catch (error) {
-    console.error('Failed to update whitelist:', error);
-  }
+  } catch (error) {}
 }
-
 
 function updateIcon(isEnabled) {
   try {
     const path = isEnabled ? 'icons/icon48.png' : 'icons/icon48.png';
-    chrome.action.setIcon({ path }, (error) => {
-      if (error) console.error('Failed to update icon:', error);
+    chrome.action.setIcon({ path }, () => {
+      if (chrome.runtime.lastError) {}
     });
-  } catch (error) {
-    console.error('Icon update error:', error);
-  }
+  } catch (error) {}
 }
-
-
-async function getFilterListInfo(listId) {
-  const list = FILTER_LISTS[listId];
-  if (!list) return null;
-  
-  try {
-    const response = await fetch(chrome.runtime.getURL(list.url));
-    const content = await response.text();
-    const rules = parseFilterList(content);
-    
-    return {
-      ...list,
-      ruleCount: rules.length,
-      lastModified: new Date().toISOString(),
-      checksum: await calculateChecksum(content)
-    };
-  } catch (error) {
-    console.error(`Failed to get filter list info for ${listId}:`, error);
-    return null;
-  }
-}
-
-
-async function calculateChecksum(content) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(content);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 
 function deduplicateRules(rules) {
   const seen = new Set();
@@ -986,10 +661,8 @@ function deduplicateRules(rules) {
     }
   }
   
-  console.log(`Deduplicated ${rules.length} rules to ${deduplicated.length} rules`);
   return deduplicated;
 }
-
 
 async function autoUpdateFilterLists() {
   try {
@@ -1001,30 +674,13 @@ async function autoUpdateFilterLists() {
     const updateFrequency = parseInt(settings.updateFrequency || '7') * 24 * 60 * 60 * 1000;
     
     if (!settings.lastFilterUpdate || (now - settings.lastFilterUpdate) > updateFrequency) {
-      console.log('Starting automatic filter list update...');
-      
-
-      for (const [listId, enabled] of Object.entries(filterLists)) {
-        if (enabled) {
-          const listInfo = await getFilterListInfo(listId);
-          if (listInfo) {
-            console.log(`Updated ${listInfo.name}: ${listInfo.ruleCount} rules`);
-          }
-        }
-      }
-      
-
-      await loadFilterLists(0, true);
+await loadFilterLists(0, true);
       
 
       await chrome.storage.sync.set({ lastFilterUpdate: now });
-      console.log('Automatic filter list update completed');
     }
-  } catch (error) {
-    console.error('Auto-update failed:', error);
-  }
+  } catch (error) {}
 }
-
 
 async function addCustomFilterList(name, url, description = '') {
   try {
@@ -1064,14 +720,11 @@ async function addCustomFilterList(name, url, description = '') {
 
     await loadFilterLists(0, true);
     
-    console.log(`Added custom filter list: ${name} (${rules.length} rules)`);
     return customList;
   } catch (error) {
-    console.error('Failed to add custom filter list:', error);
     throw error;
   }
 }
-
 
 async function removeCustomFilterList(listId) {
   try {
@@ -1085,64 +738,32 @@ async function removeCustomFilterList(listId) {
 
       await loadFilterLists(0, true);
       
-      console.log(`Removed custom filter list: ${listId}`);
       return true;
     }
     
     return false;
   } catch (error) {
-    console.error('Failed to remove custom filter list:', error);
     throw error;
   }
 }
 
-
-async function getAllFilterLists() {
-  try {
-    const data = await chrome.storage.sync.get(['customFilterLists', 'filterLists']);
-    const customLists = data.customFilterLists || {};
-    const enabledLists = data.filterLists || {};
-    
-    const allLists = {};
-    
-
-    for (const [listId, config] of Object.entries(FILTER_LISTS)) {
-      allLists[listId] = {
-        ...config,
-        enabled: enabledLists[listId] !== false
-      };
-    }
-    
-
-    for (const [listId, config] of Object.entries(customLists)) {
-      allLists[listId] = config;
-    }
-    
-    return allLists;
-  } catch (error) {
-    console.error('Failed to get all filter lists:', error);
-    return {};
-  }
-}
-
-
 function initializePerformanceMonitoring() {
 
-  setInterval(autoUpdateFilterLists, 60 * 60 * 1000);
-  
+  chrome.alarms.create(ADBLOCK_CONFIG.ALARM_AUTO_UPDATE, { periodInMinutes: 60 });
+  chrome.alarms.create(ADBLOCK_CONFIG.ALARM_PERF, { periodInMinutes: 5 });
+  chrome.alarms.create(ADBLOCK_CONFIG.ALARM_STATS, { periodInMinutes: 1 });
 
-  setInterval(() => {
-    RULE_CACHE.clear();
-    RULE_DEDUPLICATION_CACHE.clear();
-    console.log('Cache cleared for performance optimization');
-  }, 30 * 60 * 1000);
-  
-
-  setInterval(() => {
-    updatePerformanceMetrics();
-  }, 5000);
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === ADBLOCK_CONFIG.ALARM_AUTO_UPDATE) {
+      autoUpdateFilterLists();
+    } else if (alarm.name === ADBLOCK_CONFIG.ALARM_PERF) {
+      updatePerformanceMetrics();
+    } else if (alarm.name === ADBLOCK_CONFIG.ALARM_STATS) {
+      trackBlockedRequests();
+    }
+  });
 }
-
+  
 
 async function updatePerformanceMetrics() {
   try {
@@ -1151,8 +772,6 @@ async function updatePerformanceMetrics() {
       blockedToday: 0, 
       totalBlocked: 0, 
       avgResponseTime: 0,
-      cpuUsage: 0,
-      memoryUsage: 0,
       rulesActive: 0
     };
     
@@ -1160,7 +779,6 @@ async function updatePerformanceMetrics() {
     const rules = await chrome.declarativeNetRequest.getDynamicRules();
     stats.rulesActive = rules.length;
     
-
 
     
 
@@ -1175,14 +793,8 @@ async function updatePerformanceMetrics() {
     
     await chrome.storage.sync.set({ performanceStats: stats });
     
-  } catch (error) {
-    console.error('Failed to update performance metrics:', error);
-  }
+  } catch (error) {}
 }
-
-
-const activityLog = [];
-const MAX_ACTIVITY_LOG = 50;
 
 function logActivity(type, domain, details) {
   const activity = {
@@ -1193,17 +805,12 @@ function logActivity(type, domain, details) {
   };
   
 
-  activityLog.unshift(activity);
   
 
-  if (activityLog.length > MAX_ACTIVITY_LOG) {
-    activityLog.splice(MAX_ACTIVITY_LOG);
-  }
   
 
   broadcastActivity(activity);
 }
-
 
 async function broadcastActivity(activity) {
   try {
@@ -1214,11 +821,8 @@ async function broadcastActivity(activity) {
     }).catch(() => {
 
     });
-  } catch (error) {
-
-  }
+  } catch (error) {}
 }
-
 
 async function applyFilterRules(rules) {
   const startTime = performance.now();
@@ -1243,19 +847,16 @@ async function applyFilterRules(rules) {
     const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
     const existingRuleIds = existingRules.map(rule => rule.id);
     
-    console.log('Applying rules:', updatedRules.length, 'removing:', existingRuleIds.length);
     
     // Apply rules in smaller batches to prevent overwhelming
     const BATCH_SIZE = 5000;
     if (updatedRules.length > BATCH_SIZE) {
-      console.log('Applying rules in batches due to large rule count');
       for (let i = 0; i < updatedRules.length; i += BATCH_SIZE) {
         const batch = updatedRules.slice(i, i + BATCH_SIZE);
         await chrome.declarativeNetRequest.updateDynamicRules({
           removeRuleIds: i === 0 ? existingRuleIds : [],
           addRules: batch
         });
-        console.log(`Applied batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(updatedRules.length/BATCH_SIZE)}`);
       }
     } else {
       await chrome.declarativeNetRequest.updateDynamicRules({
@@ -1270,21 +871,17 @@ async function applyFilterRules(rules) {
 
     logPerformance('applyRules', responseTime, updatedRules.length);
     
-    console.log(`Successfully applied ${updatedRules.length} filter rules in ${responseTime.toFixed(2)}ms`);
     
 
     logActivity('rulesApplied', 'extension', `Applied ${updatedRules.length} rules`);
     
 
-    console.log('Applied rules:', updatedRules.map(r => ({ id: r.id, urlFilter: r.condition.urlFilter })));
     
   } catch (error) {
-    console.error('Failed to apply filter rules:', error);
     logActivity('error', 'extension', `Failed to apply rules: ${error.message}`);
     throw error;
   }
 }
-
 
 function logPerformance(operation, responseTime, details = 0) {
   chrome.storage.sync.get(['performanceStats'], (data) => {
@@ -1311,8 +908,6 @@ function logPerformance(operation, responseTime, details = 0) {
   });
 }
 
-
-let statsTrackingInterval;
 let lastProcessedRules = new Set();
 let lastTrackingCall = 0;
 let trackingErrorCount = 0;
@@ -1339,7 +934,7 @@ async function trackBlockedRequests() {
     
     if (newRules.length > 0) {
 
-      const result = await chrome.storage.sync.get(['blockedCount', 'performanceStats', 'domainStats']);
+      const result = await chrome.storage.sync.get(['blockedCount', 'performanceStats', 'domainStats', 'totalSites']);
       const newCount = (result.blockedCount || 0) + newRules.length;
       const performanceStats = result.performanceStats || { 
         blockedToday: 0, 
@@ -1347,6 +942,7 @@ async function trackBlockedRequests() {
         avgResponseTime: 0 
       };
       const domainStats = result.domainStats || {};
+      const knownSites = new Set(Object.keys(domainStats));
       
 
       performanceStats.blockedToday = (performanceStats.blockedToday || 0) + newRules.length;
@@ -1389,42 +985,34 @@ async function trackBlockedRequests() {
           }
           
           logActivity(blockType, domain, `Blocked ${rule.request?.type || 'unknown'} request`);
-          console.log(`Blocked ${blockType} request: ${rule.request.url} (Total: ${newCount})`);
-        } catch (e) {
-          console.warn('Failed to parse domain from blocked request:', e);
-        }
+        } catch (e) {}
       });
       
 
       await chrome.storage.sync.set({
         blockedCount: newCount,
         performanceStats: performanceStats,
-        domainStats: domainStats
+        domainStats: domainStats,
+        totalSites: Object.keys(domainStats).length
       });
       
 
       lastProcessedRules = currentRuleIds;
-    
-    // Reset error counter on successful tracking
-    trackingErrorCount = 0;
+
+      // Reset error counter on successful tracking
+      trackingErrorCount = 0;
     }
   } catch (error) {
     trackingErrorCount++;
-    
+
     // Handle quota exceeded errors gracefully
     if (error.message.includes('MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL')) {
-      console.warn('Rate limit reached, skipping this tracking cycle');
       // Increase cooldown time if we hit the limit
-      lastTrackingCall = Date.now() + 60000; // Add 60 seconds penalty
-    } else {
-      console.error('Error tracking blocked requests:', error);
+      lastTrackingCall = Date.now() + 60000;
     }
-    
-    // Disable tracking if too many errors occur
+
     if (trackingErrorCount >= MAX_TRACKING_ERRORS) {
-      console.warn('Too many tracking errors, disabling stats tracking temporarily');
       stopStatsTracking();
-      // Retry after 5 minutes
       setTimeout(() => {
         trackingErrorCount = 0;
         startStatsTracking();
@@ -1433,22 +1021,14 @@ async function trackBlockedRequests() {
   }
 }
 
-
 function startStatsTracking() {
-  // Temporarily disabled tracking to prevent page loading issues
-  console.log('Stats tracking disabled temporarily');
-  return;
+  lastTrackingCall = 0;
+  trackBlockedRequests();
 }
-
 
 function stopStatsTracking() {
-  if (statsTrackingInterval) {
-    clearInterval(statsTrackingInterval);
-    statsTrackingInterval = null;
-  }
   lastProcessedRules.clear();
 }
-
 
 chrome.storage.sync.get(['isEnabled'], (data) => {
   updateIcon(data.isEnabled !== false);
@@ -1457,10 +1037,5 @@ chrome.storage.sync.get(['isEnabled'], (data) => {
   if (data.isEnabled !== false) {
     startStatsTracking();
   }
-});
-
-
-chrome.runtime.onUpdateAvailable.addListener(() => {
-  console.log('Extension update available, preparing for restart');
 });
 

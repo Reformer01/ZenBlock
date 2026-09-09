@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
   const whitelistInput = document.getElementById('whitelistInput');
   const addWhitelistBtn = document.getElementById('addWhitelist');
+  const saveSettingsBtn = document.getElementById('saveSettings');
+  const enableEasyList = document.getElementById('enableEasyList');
+  const enablePrivacyList = document.getElementById('enablePrivacyList');
+  const updateFrequency = document.getElementById('updateFrequency');
+  const whitelistContainer = document.getElementById('whitelistContainer');
   const themeToggle = document.getElementById('themeToggle');
   const savedMessage = document.getElementById('savedMessage');
   const customListModal = document.getElementById('customListModal');
@@ -33,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chrome.storage.sync.set({ theme: newTheme });
   }
-
 
   function setupToggleSwitches() {
     const toggleContainers = document.querySelectorAll('.form-checkbox');
@@ -72,17 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-
   initTheme();
 
-
   setupToggleSwitches();
-
 
   if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
   }
-
 
   function switchSection(sectionId) {
 
@@ -95,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-
     contentSections.forEach(section => {
       section.classList.remove('active');
       if (section.id === sectionId) {
@@ -103,10 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-
     window.location.hash = sectionId;
   }
-
 
   navItems.forEach(item => {
     item.addEventListener('click', (e) => {
@@ -116,12 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-
   const initialHash = window.location.hash.substring(1);
   if (initialHash && document.getElementById(initialHash)) {
     switchSection(initialHash);
   }
-
 
   function updateDashboardStats(data) {
 
@@ -153,9 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (uptimeCount) {
-      uptimeCount.textContent = '100%';
+      const totalLists = 2;
+      const activeLists = ((data.filterLists?.easyList !== false) ? 1 : 0) + ((data.filterLists?.privacyList === true) ? 1 : 0);
+      uptimeCount.textContent = (data.isEnabled === false) ? 'Paused' : Math.round((activeLists / totalLists) * 100) + '%';
     }
-
 
     const avgResponseTime = document.getElementById('avgResponseTime');
     const blockedToday = document.getElementById('blockedToday');
@@ -173,14 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
       totalBlocked.textContent = data.performanceStats.totalBlocked.toLocaleString();
     }
 
-
     const lastUpdate = document.getElementById('lastUpdate');
     if (lastUpdate && data.lastFilterUpdate) {
       const date = new Date(data.lastFilterUpdate);
       lastUpdate.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
     }
   }
-
 
   function validateDomain(domain) {
     if (!domain || typeof domain !== 'string') {
@@ -198,11 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return { valid: false, error: 'Domain is too long (max 253 characters)' };
     }
 
-
     if (!/^[a-z0-9.-]+$/.test(domain)) {
       return { valid: false, error: 'Domain can only contain letters, numbers, dots, and hyphens' };
     }
-
 
     if (domain.startsWith('.') || domain.endsWith('.')) {
       return { valid: false, error: 'Domain cannot start or end with a dot' };
@@ -211,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (domain.includes('..')) {
       return { valid: false, error: 'Domain cannot contain consecutive dots' };
     }
-
 
     const invalidPatterns = [
       /^\./,
@@ -230,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-
     const parts = domain.split('.');
     if (parts.length < 2) {
       return { valid: false, error: 'Domain must have at least one dot' };
@@ -241,11 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return { valid: false, error: 'Top-level domain must be at least 2 characters' };
     }
 
-
     if (!/^[a-z]{2,}$/.test(tld)) {
       return { valid: false, error: 'Invalid top-level domain' };
     }
-
 
     const reservedDomains = [
       'localhost', 'example.com', 'example.org', 'example.net',
@@ -259,22 +247,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return { valid: true, domain };
   }
 
-
   function matchesDomain(url, whitelistedDomain) {
     try {
       const urlDomain = new URL(url).hostname.toLowerCase();
       const whitelistDomain = whitelistedDomain.toLowerCase();
 
-
       if (urlDomain === whitelistDomain) {
         return true;
       }
 
-
       if (urlDomain.endsWith('.' + whitelistDomain)) {
         return true;
       }
-
 
       if (whitelistDomain.startsWith('*.')) {
         const baseDomain = whitelistDomain.substring(2);
@@ -283,18 +267,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return false;
     } catch (error) {
-      console.error('Domain matching error:', error);
       return false;
     }
   }
-
 
   function sanitizeInput(input) {
     const div = document.createElement('div');
     div.textContent = input;
     return div.innerHTML;
   }
-
 
   function showError(message) {
     const errorDiv = document.createElement('div');
@@ -312,10 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       setTimeout(() => errorDiv.remove(), 5000);
     } else {
-      console.error('Cannot show error message - whitelistInput or parent not found:', message);
     }
   }
-
 
   async function loadSettings() {
     try {
@@ -336,26 +315,20 @@ document.addEventListener('DOMContentLoaded', () => {
       
       updateWhitelistDisplay(whitelist);
 
-
       const filterLists = data.filterLists || { easyList: true, privacyList: false };
       if (enableEasyList) enableEasyList.checked = filterLists.easyList !== false;
       if (enablePrivacyList) enablePrivacyList.checked = filterLists.privacyList || false;
 
-
       if (updateFrequency) updateFrequency.value = data.updateFrequency || '7';
 
-
       updateDashboardStats(data);
-
 
       setupToggleSwitches();
 
     } catch (error) {
-      console.error('Failed to load settings:', error);
       showError('Failed to load settings. Please refresh the page.');
     }
   }
-
 
   function displayPerformanceStats(stats) {
     const statsContainer = document.createElement('div');
@@ -375,11 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lastSection) {
         lastSection.appendChild(statsContainer);
       } else {
-        console.warn('Cannot find .content-section:last-child to append performance stats');
       }
     }
   }
-
 
   async function addToWhitelist() {
     const domain = whitelistInput.value.trim();
@@ -406,7 +377,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-
       whitelist.push(normalizedDomain);
       await chrome.storage.sync.set({ whitelist });
       
@@ -423,11 +393,9 @@ document.addEventListener('DOMContentLoaded', () => {
       showSavedMessage();
       
     } catch (error) {
-      console.error('Failed to add to whitelist:', error);
       showError('Failed to add domain to whitelist');
     }
   }
-
 
   function updateWhitelistDisplay(whitelist) {
     if (!whitelistContainer) return;
@@ -463,7 +431,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-
   async function removeFromWhitelist(domain) {
     try {
       const data = await chrome.storage.sync.get(['whitelist']);
@@ -480,31 +447,34 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       
     } catch (error) {
-      console.error('Failed to remove from whitelist:', error);
       showError('Failed to remove domain from whitelist');
     }
   }
 
-
   async function testDomain(domain) {
     try {
-      const response = await chrome.runtime.sendMessage({
-        action: 'testDomain',
-        domain: domain
-      });
-      
-      const message = response.isBlocked 
-        ? `${domain} is currently being blocked` 
-        : `${domain} is not being blocked`;
-      
-      alert(message);
-      
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const url = tabs && tabs[0] && tabs[0].url ? tabs[0].url : '';
+      let host = '';
+      try { host = new URL(url).hostname.toLowerCase(); } catch (e) {}
+      const target = String(domain || '').toLowerCase();
+      const data = await chrome.storage.sync.get(['whitelist', 'isEnabled']);
+      const listed = (data.whitelist || []).some(d => String(d).toLowerCase() === target);
+      const enabled = data.isEnabled !== false;
+      const onSite = host === target || (host && target && host.endsWith('.' + target));
+      if (listed) {
+        showError(target + ' is whitelisted, so ZenBlock allows ads there.');
+      } else if (!enabled) {
+        showError('ZenBlock is currently paused, so nothing is being blocked.');
+      } else if (onSite) {
+        showSavedMessage(target + ' is protected. Blocking is active on this site.');
+      } else {
+        showSavedMessage(target + ' is not whitelisted. Blocking applies when you visit it.');
+      }
     } catch (error) {
-      console.error('Failed to test domain:', error);
       showError('Failed to test domain');
     }
   }
-
 
   async function saveAllSettings() {
     try {
@@ -514,12 +484,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const validWhitelist = whitelist.filter(domain => {
         const validation = validateDomain(domain);
         if (!validation.valid) {
-          console.warn(`Invalid domain in whitelist: ${domain} - ${validation.error}`);
           return false;
         }
         return true;
       });
-
 
       const currentTheme = document.body.getAttribute('data-theme') || 'light';
 
@@ -540,14 +508,13 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.runtime.sendMessage({ action: 'reloadFilters' });
       
     } catch (error) {
-      console.error('Failed to save settings:', error);
       showError('Failed to save settings');
     }
   }
 
-
-  function showSavedMessage() {
+  function showSavedMessage(message) {
     if (savedMessage) {
+      if (typeof message === 'string' && message) savedMessage.textContent = message;
       savedMessage.style.display = 'inline';
       setTimeout(() => {
         if (savedMessage) {
@@ -556,7 +523,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 3000);
     }
   }
-
 
   if (addWhitelistBtn) addWhitelistBtn.addEventListener('click', addToWhitelist);
   if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveAllSettings);
@@ -588,13 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
           window.location.reload();
           
         } catch (error) {
-          console.error('Failed to reset settings:', error);
           showError('Failed to reset settings');
         }
       }
     });
   }
-
 
   if (whitelistContainer) {
     whitelistContainer.addEventListener('click', (e) => {
@@ -608,7 +572,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-
   if (whitelistInput) {
     whitelistInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
@@ -618,7 +581,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-
   [enableEasyList, enablePrivacyList, updateFrequency].forEach(element => {
     if (element) {
       element.addEventListener('change', () => {
@@ -626,7 +588,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
-
 
   // --- Modal helpers: focus management, Escape and overlay close ---
   let lastFocusedElement = null;
@@ -712,7 +673,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showError((response && response.error) || 'Failed to add the filter list.');
       }
     } catch (error) {
-      console.error('Failed to add custom filter list:', error);
       showError('Failed to add the filter list. Check the URL and try again.');
     }
   }
@@ -724,7 +684,6 @@ document.addEventListener('DOMContentLoaded', () => {
       loadFilterLists();
       showSavedMessage();
     } catch (error) {
-      console.error('Failed to remove custom filter list:', error);
       showError('Failed to remove the filter list.');
     }
   }
@@ -780,9 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const data = await chrome.storage.sync.get(['customFilterLists']);
       renderCustomFilterLists(data.customFilterLists || {});
-    } catch (error) {
-      console.error('Failed to load filter lists:', error);
-    }
+    } catch (error) {}
   }
 
   document.addEventListener('keydown', (e) => {
@@ -828,12 +785,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initSiteStats();
 });
 
-
   let currentPage = 1;
   let itemsPerPage = 25;
   let allSiteStats = [];
   let filteredSiteStats = [];
-
 
   function initSiteStats() {
 
@@ -853,7 +808,6 @@ document.addEventListener('DOMContentLoaded', () => {
       filteredSiteStats = [...allSiteStats];
       updateSiteStatsDisplay();
     });
-
 
     document.getElementById('siteFilter')?.addEventListener('input', filterSiteStats);
     document.getElementById('clearFilter')?.addEventListener('click', clearSiteFilter);
@@ -928,14 +882,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedStats = filteredSiteStats.slice(startIndex, endIndex);
 
-
     tbody.innerHTML = '';
-
 
     paginatedStats.forEach(site => {
       const row = document.createElement('tr');
@@ -955,7 +906,6 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       tbody.appendChild(row);
     });
-
 
     document.querySelectorAll('.view-details').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -1102,31 +1052,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function generateSampleData() {
-    const sampleDomains = [
-      'google.com', 'facebook.com', 'youtube.com', 'twitter.com', 'instagram.com',
-      'reddit.com', 'linkedin.com', 'amazon.com', 'netflix.com', 'spotify.com',
-      'github.com', 'stackoverflow.com', 'medium.com', 'news.ycombinator.com', 'wikipedia.org'
-    ];
-    
-    const sampleData = {};
-    const now = Date.now();
-    
-    sampleDomains.forEach(domain => {
-      const blockedCount = Math.floor(Math.random() * 100) + 10;
-      const firstSeen = now - (Math.random() * 30 * 24 * 60 * 60 * 1000);
-      const lastBlocked = now - (Math.random() * 24 * 60 * 60 * 1000);
-      
-      sampleData[domain] = {
-        count: blockedCount,
-        lastBlocked: lastBlocked,
-        firstSeen: firstSeen
-      };
-    });
-    
-
-    chrome.storage.sync.set({ domainStats: sampleData });
+    initSiteStats();
+    showSavedMessage('Statistics reflect real blocked requests.');
   }
-
 
   document.addEventListener('DOMContentLoaded', () => {
     initSiteStats();

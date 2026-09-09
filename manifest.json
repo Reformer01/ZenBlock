@@ -2,13 +2,13 @@
   "manifest_version": 3,
   "name": "ZenBlock",
   "version": "1.0.0",
-  "description": "A powerful and secure ad-blocking extension that blocks ads and trackers with robust error handling - ZenBlock",
+  "description": "A powerful and secure ad-blocking extension that blocks ads and trackers.",
   "permissions": [
+    "alarms",
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
     "storage",
-    "tabs",
-    "activeTab"
+    "tabs"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {
@@ -29,12 +29,6 @@
     "128": "icons/icon128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://easylist.to/; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["filters/*.txt", "icons/*.png"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+  }
 }
