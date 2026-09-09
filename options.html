@@ -16,13 +16,17 @@
       --text-muted: #6c757d;
       --border-color: #ced4da;
       --border-light: #e1e4e8;
-      --primary-color: #007bff;
+      --primary-color: #0069d9;
       --primary-hover: #0056b3;
-      --success-color: #28a745;
+      --success-color: #1e7e34;
       --danger-color: #dc3545;
       --danger-hover: #c82333;
       --secondary-color: #6c757d;
       --secondary-hover: #545b62;
+      --on-primary: #ffffff;
+      --on-success: #ffffff;
+      --on-danger: #ffffff;
+      --on-secondary: #ffffff;
       --shadow: rgba(0, 0, 0, 0.1);
       --shadow-hover: rgba(0, 0, 0, 0.15);
       --performance-bg: #e7f3ff;
@@ -48,6 +52,10 @@
       --danger-color: #ff6b6b;
       --danger-hover: #ff5252;
       --secondary-color: #868e96;
+      --on-primary: #0b2540;
+      --on-success: #0b2913;
+      --on-danger: #2b0909;
+      --on-secondary: #0e1114;
       --secondary-hover: #6c757d;
       --shadow: rgba(0, 0, 0, 0.3);
       --shadow-hover: rgba(0, 0, 0, 0.4);
@@ -57,8 +65,22 @@
     }
 
     * {
-      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
       box-sizing: border-box;
+    }
+
+    body,
+    .btn,
+    .nav-item,
+    .card,
+    .stat-card,
+    .toggle-switch,
+    .theme-toggle,
+    .form-input,
+    .form-select,
+    .form-checkbox,
+    .modal-content,
+    .message {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     body {
@@ -180,7 +202,7 @@
 
     .nav-item.active {
       background: var(--primary-color);
-      color: white;
+      color: var(--on-primary);
     }
 
     .nav-item::before {
@@ -384,7 +406,15 @@
     }
 
     .form-checkbox input[type="checkbox"] {
-      display: none;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+
+    .form-checkbox input[type="checkbox"]:focus-visible + .toggle-switch {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
     }
 
     .form-checkbox .toggle-switch {
@@ -469,7 +499,7 @@
 
     .btn-primary {
       background: var(--primary-color);
-      color: white;
+      color: var(--on-primary);
     }
 
     .btn-primary:hover {
@@ -478,7 +508,7 @@
 
     .btn-secondary {
       background: var(--secondary-color);
-      color: white;
+      color: var(--on-secondary);
     }
 
     .btn-secondary:hover {
@@ -487,7 +517,7 @@
 
     .btn-danger {
       background: var(--danger-color);
-      color: white;
+      color: var(--on-danger);
     }
 
     .btn-danger:hover {
@@ -496,7 +526,7 @@
 
     .btn-success {
       background: var(--success-color);
-      color: white;
+      color: var(--on-success);
     }
 
     .btn-group {
@@ -678,13 +708,13 @@
 
     .message-success {
       background: var(--success-color);
-      color: white;
+      color: var(--on-success);
       border: 1px solid var(--success-color);
     }
 
     .message-error {
       background: var(--danger-color);
-      color: white;
+      color: var(--on-danger);
       border: 1px solid var(--danger-color);
     }
 
@@ -815,6 +845,15 @@
       height: 36px;
     }
 
+    .modal-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      line-height: 1;
+    }
+
     .modal-close::before {
       content: "";
       display: inline-block;
@@ -823,13 +862,6 @@
       background-color: currentColor;
       -webkit-mask: url('icons/phosphor/x.svg') center / contain no-repeat;
       mask: url('icons/phosphor/x.svg') center / contain no-repeat;
-    }
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      line-height: 1;
     }
 
     .modal-close:hover {
@@ -884,8 +916,9 @@
 }
 
 .stats-table .btn-sm {
-  padding: 4px 8px;
+  padding: 6px 10px;
   font-size: 12px;
+  min-height: 28px;
   margin: 0 2px;
 }
 
@@ -986,22 +1019,96 @@
     grid-template-columns: 1fr;
   }
 }
+    /* Accessibility: visible keyboard focus */
+    :focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    .form-input:focus-visible,
+    .form-select:focus-visible {
+      outline: none;
+    }
+
+    /* Respect user motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Empty state icon (Phosphor) */
+    .empty-state-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      background-color: var(--text-muted);
+      opacity: 0.5;
+      -webkit-mask: url('icons/phosphor/chart-bar.svg') center / contain no-repeat;
+      mask: url('icons/phosphor/chart-bar.svg') center / contain no-repeat;
+    }
+
+    /* Feature list icons (Phosphor) */
+    .feature-icon-check {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      background-color: var(--success-color);
+      -webkit-mask: url('icons/phosphor/check-circle.svg') center / contain no-repeat;
+      mask: url('icons/phosphor/check-circle.svg') center / contain no-repeat;
+    }
+
+    /* Custom filter list rows */
+    .filter-list-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: var(--bg-primary);
+    }
+
+    .filter-list-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .filter-list-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .filter-list-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body data-theme="light">
   
   <header class="header">
     <div class="header-title">ZenBlock Settings</div>
-    <div class="theme-toggle" id="themeToggle" title="Toggle theme">
-      <div class="theme-toggle-slider"></div>
-    </div>
+    <button type="button" class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle dark mode" aria-pressed="false">
+      <span class="theme-toggle-slider"></span>
+    </button>
   </header>
 
   
   <div class="container">
     
     <nav class="sidebar">
-      <a href="#dashboard" class="nav-item active" data-icon="chart-bar" data-section="dashboard">Dashboard</a>
+      <a href="#dashboard" class="nav-item active" data-icon="chart-bar" data-section="dashboard" aria-current="page">Dashboard</a>
       <a href="#whitelist" class="nav-item" data-icon="lock-key" data-section="whitelist">Whitelist</a>
       <a href="#filters" class="nav-item" data-icon="shield-check" data-section="filters">Filter Lists</a>
       <a href="#advanced" class="nav-item" data-icon="gear-six" data-section="advanced">Advanced</a>
@@ -1065,12 +1172,7 @@
         <tr>
           <td colspan="5" class="text-center" id="noStatsMessage">
             <div style="padding: 20px; color: var(--text-muted);">
-              <div style="width: 48px; height: 48px; margin: 0 auto 16px; 
-                         background-image: url('icons/stats.png'); 
-                         background-size: contain; 
-                         background-repeat: no-repeat; 
-                         opacity: 0.5;">
-              </div>
+              <div class="empty-state-icon" aria-hidden="true"></div>
               <div>No statistics available yet</div>
               <div style="font-size: 13px; margin-top: 8px;">
                 Visit some websites to see per-site blocking statistics
@@ -1230,27 +1332,27 @@
             <h4>Features</h4>
             <div class="feature-list">
               <div class="feature-item">
-                <img src="icons/check.png" alt="Check" class="feature-icon">
+                <span class="feature-icon feature-icon-check" aria-hidden="true"></span>
                 <span>Efficient ad blocking with declarativeNetRequest</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="Check" class="feature-icon">
+                <span class="feature-icon feature-icon-check" aria-hidden="true"></span>
                 <span>Comprehensive filter list support</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="Check" class="feature-icon">
+                <span class="feature-icon feature-icon-check" aria-hidden="true"></span>
                 <span>Privacy protection and tracker blocking</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="Check" class="feature-icon">
+                <span class="feature-icon feature-icon-check" aria-hidden="true"></span>
                 <span>Performance monitoring and optimization</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="Check" class="feature-icon">
+                <span class="feature-icon feature-icon-check" aria-hidden="true"></span>
                 <span>Dark mode and modern UI design</span>
               </div>
               <div class="feature-item">
-                <img src="icons/check.png" alt="Check" class="feature-icon">
+                <span class="feature-icon feature-icon-check" aria-hidden="true"></span>
                 <span>Robust error handling and recovery</span>
               </div>
             </div>
@@ -1270,11 +1372,11 @@
   <div id="errorMessage" class="message message-error" style="display: none;"></div>
 
   
-  <div class="modal" id="customListModal">
+  <div class="modal" id="customListModal" role="dialog" aria-modal="true" aria-labelledby="customListModalTitle">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">Add Custom Filter List</h3>
-        <button class="modal-close" id="closeModal"></button>
+        <h3 class="modal-title" id="customListModalTitle">Add Custom Filter List</h3>
+        <button type="button" class="modal-close" id="closeModal" aria-label="Close dialog"></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -1298,11 +1400,11 @@
   </div>
 
   
-  <div class="modal" id="siteDetailsModal">
+  <div class="modal" id="siteDetailsModal" role="dialog" aria-modal="true" aria-labelledby="siteDetailsModalTitle">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">Site Statistics Details</h3>
-        <button class="modal-close" id="closeDetailsModal"></button>
+        <h3 class="modal-title" id="siteDetailsModalTitle">Site Statistics Details</h3>
+        <button type="button" class="modal-close" id="closeDetailsModal" aria-label="Close dialog"></button>
       </div>
       <div class="modal-body">
         <div class="site-details-container">

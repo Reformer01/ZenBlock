@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateThemeToggle(theme) {
     if (themeToggle) {
       themeToggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+      themeToggle.setAttribute('aria-pressed', String(theme === 'dark'));
     }
   }
 
@@ -292,6 +293,12 @@ function updatePerformanceUI() {
   }
 
 
+  function setToggleState(enabled) {
+    toggleSwitch.classList.toggle('active', enabled);
+    toggleSwitch.setAttribute('aria-checked', String(enabled));
+  }
+
+
   async function loadStats() {
     const startTime = performance.now();
     
@@ -304,11 +311,7 @@ function updatePerformanceUI() {
         
 
         if (response.data.isEnabled !== undefined) {
-          if (response.data.isEnabled) {
-            toggleSwitch.classList.add('active');
-          } else {
-            toggleSwitch.classList.remove('active');
-          }
+          setToggleState(response.data.isEnabled);
         }
         
 
@@ -333,7 +336,7 @@ function updatePerformanceUI() {
       
 
       updateBlockedCount(0);
-      toggleSwitch.classList.add('active');
+      setToggleState(true);
       
 
       try {
@@ -432,9 +435,9 @@ function updatePerformanceUI() {
       
 
       if (isEnabled) {
-        toggleSwitch.classList.add('active');
+        setToggleState(true);
       } else {
-        toggleSwitch.classList.remove('active');
+        setToggleState(false);
       }
       
 
@@ -457,9 +460,9 @@ function updatePerformanceUI() {
       
 
       if (isEnabled) {
-        toggleSwitch.classList.remove('active');
+        setToggleState(false);
       } else {
-        toggleSwitch.classList.add('active');
+        setToggleState(true);
       }
       showErrorIndicator();
       
@@ -487,7 +490,7 @@ function updatePerformanceUI() {
       position: fixed;
       top: 10px;
       right: 10px;
-      background: ${isEnabled ? '#28a745' : '#dc3545'};
+      background: ${isEnabled ? '#1e7e34' : '#dc3545'};
       color: white;
       padding: 8px 12px;
       border-radius: 4px;
@@ -545,15 +548,17 @@ function updatePerformanceUI() {
   }
 
 
-  document.addEventListener('keydown', (e) => {
-
-    if (e.code === 'Space' && !toggleSwitch.disabled) {
+  toggleSwitch.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') {
       e.preventDefault();
-      const isActive = toggleSwitch.classList.contains('active');
-      toggleAdBlocking(!isActive);
+      if (!toggleSwitch.disabled) {
+        const isActive = toggleSwitch.classList.contains('active');
+        toggleAdBlocking(!isActive);
+      }
     }
-    
+  });
 
+  document.addEventListener('keydown', (e) => {
     if (e.code === 'KeyO' && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       openOptions();

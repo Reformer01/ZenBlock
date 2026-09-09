@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
   const whitelistInput = document.getElementById('whitelistInput');
   const addWhitelistBtn = document.getElementById('addWhitelist');
+  const themeToggle = document.getElementById('themeToggle');
+  const savedMessage = document.getElementById('savedMessage');
+  const customListModal = document.getElementById('customListModal');
+  const siteDetailsModal = document.getElementById('siteDetailsModal');
 
   const navItems = document.querySelectorAll('.nav-item');
   const contentSections = document.querySelectorAll('.content-section');
@@ -14,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateThemeToggle(theme) {
     if (themeToggle) {
       themeToggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+      themeToggle.setAttribute('aria-pressed', String(theme === 'dark'));
     }
   }
 
@@ -83,8 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navItems.forEach(item => {
       item.classList.remove('active');
+      item.removeAttribute('aria-current');
       if (item.getAttribute('data-section') === sectionId) {
         item.classList.add('active');
+        item.setAttribute('aria-current', 'page');
       }
     });
 
@@ -621,6 +628,197 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
+  // --- Modal helpers: focus management, Escape and overlay close ---
+  let lastFocusedElement = null;
+
+  function openModal(modal) {
+    if (!modal) return;
+    lastFocusedElement = document.activeElement;
+    modal.classList.add('active');
+    const focusTarget = modal.querySelector('input, textarea, select, .modal-close');
+    if (focusTarget) focusTarget.focus();
+  }
+
+  function closeModal(modal) {
+    if (!modal) return;
+    modal.classList.remove('active');
+    if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+      lastFocusedElement.focus();
+    }
+    lastFocusedElement = null;
+  }
+
+  function openCustomListModal() {
+    openModal(customListModal);
+  }
+
+  function closeCustomListModal() {
+    closeModal(customListModal);
+  }
+
+  function clearCustomListForm() {
+    const nameInput = document.getElementById('customListName');
+    const urlInput = document.getElementById('customListUrl');
+    const descInput = document.getElementById('customListDescription');
+    if (nameInput) nameInput.value = '';
+    if (urlInput) urlInput.value = '';
+    if (descInput) descInput.value = '';
+  }
+
+  async function confirmAddCustomList() {
+    const nameInput = document.getElementById('customListName');
+    const urlInput = document.getElementById('customListUrl');
+    const descInput = document.getElementById('customListDescription');
+
+    const name = nameInput ? nameInput.value.trim() : '';
+    const url = urlInput ? urlInput.value.trim() : '';
+    const description = descInput ? descInput.value.trim() : '';
+
+    if (!name) {
+      showError('Please enter a list name.');
+      if (nameInput) nameInput.focus();
+      return;
+    }
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch (e) {
+      showError('Please enter a valid URL.');
+      if (urlInput) urlInput.focus();
+      return;
+    }
+
+    if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+      showError('The list URL must start with http:// or https://');
+      if (urlInput) urlInput.focus();
+      return;
+    }
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'addCustomFilterList',
+        name: name,
+        url: url,
+        description: description
+      });
+
+      if (response && response.success) {
+        clearCustomListForm();
+        closeCustomListModal();
+        showSavedMessage();
+        loadFilterLists();
+      } else {
+        showError((response && response.error) || 'Failed to add the filter list.');
+      }
+    } catch (error) {
+      console.error('Failed to add custom filter list:', error);
+      showError('Failed to add the filter list. Check the URL and try again.');
+    }
+  }
+
+  async function removeCustomList(listId) {
+    if (!confirm('Remove this custom filter list?')) return;
+    try {
+      await chrome.runtime.sendMessage({ action: 'removeCustomFilterList', listId: listId });
+      loadFilterLists();
+      showSavedMessage();
+    } catch (error) {
+      console.error('Failed to remove custom filter list:', error);
+      showError('Failed to remove the filter list.');
+    }
+  }
+
+  function renderCustomFilterLists(customLists) {
+    const container = document.getElementById('filterListsContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const lists = Object.values(customLists || {});
+
+    if (lists.length === 0) {
+      const emptyMsg = document.createElement('p');
+      emptyMsg.className = 'card-description';
+      emptyMsg.textContent = 'No custom filter lists yet. Use "Add Custom Filter List" to subscribe to one.';
+      container.appendChild(emptyMsg);
+      return;
+    }
+
+    lists.forEach(list => {
+      const row = document.createElement('div');
+      row.className = 'filter-list-row';
+
+      const info = document.createElement('div');
+      info.className = 'filter-list-info';
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'filter-list-name';
+      nameEl.textContent = list.name || 'Untitled list';
+
+      const metaEl = document.createElement('div');
+      metaEl.className = 'filter-list-meta';
+      const ruleCount = typeof list.ruleCount === 'number' ? list.ruleCount : 0;
+      metaEl.textContent = `${ruleCount} rules - ${list.url || ''}`;
+
+      info.appendChild(nameEl);
+      info.appendChild(metaEl);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-danger btn-sm';
+      removeBtn.textContent = 'Remove';
+      removeBtn.setAttribute('aria-label', `Remove filter list ${list.name || 'untitled'}`);
+      removeBtn.addEventListener('click', () => removeCustomList(list.id));
+
+      row.appendChild(info);
+      row.appendChild(removeBtn);
+      container.appendChild(row);
+    });
+  }
+
+  async function loadFilterLists() {
+    try {
+      const data = await chrome.storage.sync.get(['customFilterLists']);
+      renderCustomFilterLists(data.customFilterLists || {});
+    } catch (error) {
+      console.error('Failed to load filter lists:', error);
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (customListModal && customListModal.classList.contains('active')) {
+        closeCustomListModal();
+      } else if (siteDetailsModal && siteDetailsModal.classList.contains('active')) {
+        closeSiteDetailsModal();
+      }
+    }
+  });
+
+  if (customListModal) {
+    customListModal.addEventListener('click', (e) => {
+      if (e.target === customListModal) closeCustomListModal();
+    });
+  }
+
+  if (siteDetailsModal) {
+    siteDetailsModal.addEventListener('click', (e) => {
+      if (e.target === siteDetailsModal) closeSiteDetailsModal();
+    });
+  }
+
+  const addCustomListBtn = document.getElementById('addCustomListBtn');
+  if (addCustomListBtn) addCustomListBtn.addEventListener('click', openCustomListModal);
+
+  const closeModalBtn = document.getElementById('closeModal');
+  if (closeModalBtn) closeModalBtn.addEventListener('click', closeCustomListModal);
+
+  const cancelAddListBtn = document.getElementById('cancelAddList');
+  if (cancelAddListBtn) cancelAddListBtn.addEventListener('click', closeCustomListModal);
+
+  const confirmAddListBtn = document.getElementById('confirmAddList');
+  if (confirmAddListBtn) confirmAddListBtn.addEventListener('click', confirmAddCustomList);
+
   loadSettings();
   
 
@@ -829,6 +1027,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modal.classList.add('active');
     
+
+    const closeBtn = modal.querySelector('.modal-close');
+    if (closeBtn) closeBtn.focus();
 
     modal.dataset.currentDomain = domain;
   }

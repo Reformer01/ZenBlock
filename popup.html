@@ -16,11 +16,13 @@
       --text-muted: #6c757d;
       --border-color: #ced4da;
       --border-light: #e1e4e8;
-      --primary-color: #007bff;
+      --primary-color: #0069d9;
       --primary-hover: #0056b3;
-      --success-color: #28a745;
+      --success-color: #1e7e34;
       --danger-color: #dc3545;
       --secondary-color: #6c757d;
+      --on-primary: #ffffff;
+      --on-danger: #ffffff;
       --shadow: rgba(0, 0, 0, 0.1);
       --shadow-hover: rgba(0, 0, 0, 0.15);
     }
@@ -40,13 +42,22 @@
       --success-color: #51cf66;
       --danger-color: #ff6b6b;
       --secondary-color: #868e96;
+      --on-primary: #0b2540;
+      --on-danger: #2b0909;
       --shadow: rgba(0, 0, 0, 0.3);
       --shadow-hover: rgba(0, 0, 0, 0.4);
     }
 
     * {
-      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
       box-sizing: border-box;
+    }
+
+    body,
+    .btn,
+    .toggle-switch,
+    .theme-toggle,
+    .toggle-container {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     body {
@@ -148,11 +159,10 @@
       width: 48px;
       height: 48px;
       margin: 0 auto 12px;
-      background-image: url('icons/encrypted.png');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
+      background-color: var(--primary-color);
       opacity: 0.8;
+      -webkit-mask: url('icons/phosphor/shield-check.svg') center / contain no-repeat;
+      mask: url('icons/phosphor/shield-check.svg') center / contain no-repeat;
     }
     
     .stats-number {
@@ -276,7 +286,7 @@
     
     .btn-primary {
       background: var(--primary-color);
-      color: white;
+      color: var(--on-primary);
     }
     
     .btn-primary:hover {
@@ -681,22 +691,38 @@
       -webkit-mask-image: url('icons/phosphor/x-circle.svg');
       mask-image: url('icons/phosphor/x-circle.svg');
     }
+    /* Accessibility: visible keyboard focus */
+    :focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    /* Respect user motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body data-theme="light">
   
   <header class="header">
     <div class="title">ZenBlock</div>
-    <div class="theme-toggle" id="themeToggle" title="Toggle theme">
-      <div class="theme-toggle-slider"></div>
-    </div>
+    <button type="button" class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle dark mode" aria-pressed="false">
+      <span class="theme-toggle-slider"></span>
+    </button>
   </header>
   
   
   <main class="main-content">
     
     <section class="stats-section">
-      <div class="stats-icon"></div>
+      <div class="stats-icon" aria-hidden="true"></div>
       <div class="stats-number" id="blockedCount">0</div>
       <div class="stats-label">Ads blocked</div>
       <div class="stats-details">
@@ -782,8 +808,8 @@
     
     <section class="toggle-section">
       <div class="toggle-container">
-        <span class="toggle-label">Enable ZenBlock</span>
-        <div class="toggle-switch" id="toggleSwitch">
+        <span class="toggle-label" id="toggleLabel">Enable ZenBlock</span>
+        <div class="toggle-switch" id="toggleSwitch" role="switch" aria-labelledby="toggleLabel" aria-checked="false" tabindex="0">
           <div class="toggle-slider"></div>
         </div>
       </div>
