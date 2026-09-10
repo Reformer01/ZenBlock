@@ -68,8 +68,12 @@ report and ship regular updates with improved rule coverage and new features.
 
 CATEGORY
 --------
-Productivity  (ad/tracker blocking is classified as Productivity in the Chrome Web
-Store; privacy/security alternative: "Search Tools" is not eligible - use Productivity)
+Productivity  (top-level option, 2nd entry in the Category dropdown, right below the
+"Description" label. Ad/tracker blockers such as AdBlock, uBlock Origin, and AdGuard
+are all listed under Productivity. Note: the "Make Chrome Yours" submenu only offers
+Accessibility, Functionality & UI, and Privacy & Security - Productivity is a main
+category, not part of that submenu. Only if Productivity is truly absent from your
+form's list, choose the closest alternative: Tools.)
 
 
 LANGUAGE
@@ -85,6 +89,6 @@ no ads, secure browsing
 
 CHROME WEB STORE "SINGLE PURPOSE" POSITIONING
 ---------------------------------------------
-Category: Privacy and security  |  Single purpose: Block ads and trackers.
+Category: Productivity  |  Single purpose: Block ads and trackers.
 Keep the listing text focused on ad/tracker blocking; do not mention any other
 product line, data-syncing service, or affiliate content in the listing.
