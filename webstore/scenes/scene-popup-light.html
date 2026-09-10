@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;padding:0;width:1280px;height:800px;overflow:hidden}
+body{background:linear-gradient(140deg,#edf3fb 0%,#e6eef8 45%,#dbe6f4 100%)}
+.glare{position:absolute;inset:0;background:radial-gradient(circle at 18% 12%, rgba(255,255,255,0.14) 0%, transparent 55%)}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(90,120,180,0.35) 1.2px, transparent 1.2px);background-size:34px 34px;opacity:0.35}
+.card{position:absolute;left:356px;top:52px;width:560px;height:660px;border-radius:20px;box-shadow:0 30px 90px rgba(23,34,71,0.28), 0 4px 18px rgba(0,0,0,0.15);background:#ffffff;}
+.titlebar{height:52px;border-radius:20px 20px 0 0;display:flex;align-items:center;padding:0 16px;background:#f2f4f8;}
+.dot{width:12px;height:12px;border-radius:50%;margin-right:8px}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.urlbar{flex:1;height:26px;border-radius:13px;margin:0 10px;display:flex;align-items:center;padding:0 10px;font:600 12px system-ui;color:#5a6270;background:#eceef3;}
+.urlbar i{width:9px;height:9px;background:#2ea65f;border-radius:50%;margin-right:7px;flex-shrink:0}
+.content{position:absolute;left:0;top:52px;width:320px;height:608px;right:240px;border:0}
+.brand{position:absolute;left:60px;top:120px;width:200px}
+.chip{display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.28);border-radius:999px;padding:7px 16px;font:600 13px system-ui;color:#fff}
+</style></head><body>
+<div class="dots"></div><div class="glare"></div>
+<div class="card">
+  <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><div class="urlbar"><i></i>news.example.com</div></div>
+  <iframe class="content" src="../harness/static-popup-light.html" scrolling="no"></iframe>
+</div>
+</body></html>

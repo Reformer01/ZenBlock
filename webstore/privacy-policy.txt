@@ -1,0 +1,55 @@
+PRIVACY POLICY - ZenBlock (Chrome Extension)
+============================================
+(Content is ready to paste onto the privacy-policy page you link from the Chrome Web
+Store. It is intentionally plain, legal-safe, and technical enough to satisfy the CWS
+review. A single public URL is sufficient; example: https://github.com/Reformer01/ZenBlock/blob/master/PRIVACY.md
+- or host the text below on any page you control.)
+
+
+Effective date: <SET TODAY'S DATE>
+
+This page describes how the ZenBlock extension handles data. ZenBlock is an ad- and
+tracker-blocking browser extension distributed through the Chrome Web Store.
+
+1. DATA WE COLLECT
+ZenBlock does not collect, store, transmit, or share any personal information. It
+does not require an account, does not use cookies for tracking, and does not contain
+analytics or advertising code.
+
+2. WHAT THE EXTENSION READS AND WHERE IT STAYS
+- The extension needs permission to read the URLs of the network requests triggered
+  by the pages you visit in order to decide which requests to block. This evaluation
+  happens locally on your device, inside the browser.
+- Settings you choose (which filter lists are enabled, whitelisted sites, update
+  frequency, theme) and simple statistics (how many requests were blocked) are stored
+  locally on your device using Chrome's extension storage. This data never leaves
+  your browser and is removed if you uninstall or clear data for the extension.
+
+3. NETWORK CONNECTIONS THE EXTENSION MAKES
+- The extension downloads public filter lists (EasyList) over HTTPS from the
+  well-known official sources for those lists, on installation and then automatically
+  on the schedule you choose (default: every 7 days). Only the list files are
+  downloaded; nothing about your browsing is sent.
+- The extension performs no other network activity.
+
+4. USE OF CHROME PERMISSIONS
+- declarativeNetRequest: required to install the blocking rules that stop ads and
+  trackers at the network layer.
+- declarativeNetRequestFeedback: required to read the count of requests the rules
+  matched, so the Dashboard can show accurate, honest blocking statistics.
+- alarms: required to schedule filter-list updates and statistics refreshes in the
+  background.
+- storage: required to keep your settings and statistics locally on your device.
+- host_permissions <all_urls>: required so the blocking rules apply on every website
+  you visit, which is the core function of an ad blocker.
+
+5. THIRD PARTIES
+ZenBlock does not share data with any third party and does not use any third-party
+analytics.
+
+6. DATA RETENTION AND DELETION
+Statistics and settings remain only on your device. Uninstall the extension (or click
+"Clear site data" in the options page) to delete them permanently.
+
+7. CONTACT
+For questions about this policy, open an issue on the project's public repository.

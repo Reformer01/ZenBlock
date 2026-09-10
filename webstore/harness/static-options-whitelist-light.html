@@ -1108,8 +1108,8 @@
   <div class="container">
     
     <nav class="sidebar">
-      <a href="#dashboard" class="nav-item active" data-icon="chart-bar" data-section="dashboard" aria-current="page">Dashboard</a>
-      <a href="#whitelist" class="nav-item" data-icon="lock-key" data-section="whitelist">Whitelist</a>
+      <a href="#dashboard" class="nav-item" data-icon="chart-bar" data-section="dashboard" >Dashboard</a>
+      <a href="#whitelist" class="nav-item active" aria-current="page" data-icon="lock-key" data-section="whitelist">Whitelist</a>
       <a href="#filters" class="nav-item" data-icon="shield-check" data-section="filters">Filter Lists</a>
       <a href="#advanced" class="nav-item" data-icon="gear-six" data-section="advanced">Advanced</a>
       <a href="#about" class="nav-item" data-icon="info" data-section="about">About</a>
@@ -1118,7 +1118,7 @@
     
     <main class="main-content">
       
-      <section id="dashboard" class="content-section active">
+      <section id="dashboard" class="content-section">
         <div class="section-header">
           <h1 class="section-title">Dashboard</h1>
           <p class="section-description">Overview of ZenBlock performance and statistics</p>
@@ -1203,7 +1203,7 @@
 </div>
 
       
-      <section id="whitelist" class="content-section">
+      <section id="whitelist" class="content-section active">
         <div class="section-header">
           <h1 class="section-title">Whitelist Management</h1>
           <p class="section-description">Manage websites that are allowed to show ads</p>
@@ -1221,6 +1221,27 @@
         <div class="card">
           <h3 class="card-title" data-icon="clipboard-text">Whitelisted Websites</h3>
           <div class="whitelist-list" id="whitelistContainer">
+            <div class="whitelist-item">
+              <span class="whitelist-domain">news.example.com</span>
+              <div class="whitelist-actions">
+                <button class="btn btn-sm btn-success" title="Test if site is accessible">Test</button>
+                <button class="btn btn-sm btn-danger" title="Remove from whitelist">Remove</button>
+              </div>
+            </div>
+            <div class="whitelist-item">
+              <span class="whitelist-domain">shop.example.org</span>
+              <div class="whitelist-actions">
+                <button class="btn btn-sm btn-success" title="Test if site is accessible">Test</button>
+                <button class="btn btn-sm btn-danger" title="Remove from whitelist">Remove</button>
+              </div>
+            </div>
+            <div class="whitelist-item">
+              <span class="whitelist-domain">docs.example.net</span>
+              <div class="whitelist-actions">
+                <button class="btn btn-sm btn-success" title="Test if site is accessible">Test</button>
+                <button class="btn btn-sm btn-danger" title="Remove from whitelist">Remove</button>
+              </div>
+            </div>
             
           </div>
         </div>
@@ -1455,6 +1476,12 @@
   </div>
 
   
-  <script src="options.js"></script>
+  <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    <button class="btn btn-secondary" id="generateSampleData" title="Generate sample data for testing">
+      Generate Sample Data
+    </button>
+  </div>
+
+  
 </body>
 </html>

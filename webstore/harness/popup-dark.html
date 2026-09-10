@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZenBlock</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';">
+  <style>
+    :root {
+      /* Light mode colors */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-tertiary: #e9ecef;
+      --text-primary: #1a1a1a;
+      --text-secondary: #495057;
+      --text-muted: #6c757d;
+      --border-color: #ced4da;
+      --border-light: #e1e4e8;
+      --primary-color: #0069d9;
+      --primary-hover: #0056b3;
+      --success-color: #1e7e34;
+      --danger-color: #dc3545;
+      --secondary-color: #6c757d;
+      --on-primary: #ffffff;
+      --on-danger: #ffffff;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --shadow-hover: rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="dark"] {
+      /* Dark mode colors */
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #2d2d2d;
+      --bg-tertiary: #404040;
+      --text-primary: #ffffff;
+      --text-secondary: #b8b8b8;
+      --text-muted: #888888;
+      --border-color: #404040;
+      --border-light: #555555;
+      --primary-color: #4dabf7;
+      --primary-hover: #339af0;
+      --success-color: #51cf66;
+      --danger-color: #ff6b6b;
+      --secondary-color: #868e96;
+      --on-primary: #0b2540;
+      --on-danger: #2b0909;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --shadow-hover: rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body,
+    .btn,
+    .toggle-switch,
+    .theme-toggle,
+    .toggle-container {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    body {
+      width: 320px;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      min-height: 480px;
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+    }
+    
+    .title::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+      background-image: url('../../icons/meditation.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    .theme-toggle {
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+      border-radius: 24px;
+      padding: 4px;
+      display: flex;
+      cursor: pointer;
+      position: relative;
+      width: 48px;
+      height: 28px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .theme-toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    [data-theme="dark"] .theme-toggle {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--primary-color)33;
+    }
+    
+    [data-theme="dark"] .theme-toggle-slider {
+      transform: translateX(20px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .theme-toggle:hover {
+      border-color: var(--primary-color);
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Stats Section */
+    .stats-section {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    .stats-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      background-color: var(--primary-color);
+      opacity: 0.8;
+      -webkit-mask: url('../../icons/phosphor/shield-check.svg') center / contain no-repeat;
+      mask: url('../../icons/phosphor/shield-check.svg') center / contain no-repeat;
+    }
+    
+    .stats-number {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+    
+    .stats-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+    
+    .stats-details {
+      display: flex;
+      justify-content: space-around;
+      padding: 16px 0;
+      border-top: 1px solid var(--border-light);
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    
+    .stat-label-small {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Toggle Section */
+    .toggle-section {
+      margin-bottom: 24px;
+    }
+    
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .toggle-container:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    
+    .toggle-label {
+      font-size: 14px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .toggle-switch.active {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--primary-color)33;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(20px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: auto;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    
+    .btn-primary {
+      background: var(--primary-color);
+      color: var(--on-primary);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px var(--shadow-hover);
+    }
+    
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+      border-color: var(--primary-color);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Footer */
+    .footer {
+      padding: 12px 20px;
+      text-align: center;
+      border-top: 1px solid var(--border-light);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    
+    .footer::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 4px;
+      background-image: url('../../icons/lotus.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.7;
+    }
+    
+    .footer::after {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-left: 4px;
+      background-image: url('../../icons/lotus.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.7;
+    }
+    
+    /* Performance Section */
+.performance-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.performance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.performance-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.performance-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success-color);
+  position: relative;
+}
+
+.performance-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.performance-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.performance-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.performance-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 60px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.progress-value {
+  font-size: 10px;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Activity Section */
+.activity-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.activity-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.activity-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.activity-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-icon.blocked {
+  background: var(--danger-color);
+  color: white;
+  font-size: 8px;
+}
+
+.activity-icon.blocked::before {
+  content: "";
+  display: block;
+  width: 8px;
+  height: 8px;
+  background-color: currentColor;
+  -webkit-mask: url('../../icons/phosphor/x.svg') center / contain no-repeat;
+  mask: url('../../icons/phosphor/x.svg') center / contain no-repeat;
+}
+
+.activity-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-text {
+  font-size: 11px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-time {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* Enhanced Stats Display */
+.stats-section {
+  margin: 16px 0;
+  padding: 20px 16px;
+  background: linear-gradient(135deg, #2563eb, #1e40af, #1e3a8a);
+  border-radius: 16px;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(37, 99, 235, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-section::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(180deg); }
+}
+
+.stats-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 8px;
+  background-image: url('../../icons/encrypted.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.9;
+}
+
+.stats-number {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  text-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  letter-spacing: -0.5px;
+  line-height: 1;
+  color: #ffffff;
+  text-align: center;
+  position: relative;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    text-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  }
+  50% { 
+    transform: scale(1.05); 
+    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+}
+
+.stats-label {
+  font-size: 14px;
+  opacity: 1;
+  margin-bottom: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+}
+
+.stats-details {
+  display: flex;
+  justify-content: space-around;
+  gap: 12px;
+  padding: 0 8px;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 4px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  line-height: 1;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover .stat-value {
+  transform: scale(1.1);
+  text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.stat-label-small {
+  font-size: 11px;
+  opacity: 1;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover .stat-label-small {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+/* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border-color);
+      border-top: 2px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 4px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* Phosphor status icons (rendered via CSS mask so they follow text color) */
+    .status-icon {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 5px;
+      vertical-align: -1px;
+      background-color: currentColor;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+    }
+
+    .status-icon-warning {
+      -webkit-mask-image: url('../../icons/phosphor/warning.svg');
+      mask-image: url('../../icons/phosphor/warning.svg');
+    }
+
+    .status-icon-check {
+      -webkit-mask-image: url('../../icons/phosphor/check-circle.svg');
+      mask-image: url('../../icons/phosphor/check-circle.svg');
+    }
+
+    .status-icon-x {
+      -webkit-mask-image: url('../../icons/phosphor/x-circle.svg');
+      mask-image: url('../../icons/phosphor/x-circle.svg');
+    }
+    /* Accessibility: visible keyboard focus */
+    :focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    /* Respect user motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  
+  <header class="header">
+    <div class="title">ZenBlock</div>
+    <button type="button" class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle dark mode" aria-pressed="false">
+      <span class="theme-toggle-slider"></span>
+    </button>
+  </header>
+  
+  
+  <main class="main-content">
+    
+    <section class="stats-section">
+      <div class="stats-icon" aria-hidden="true"></div>
+      <div class="stats-number" id="blockedCount">0</div>
+      <div class="stats-label">Ads blocked</div>
+      <div class="stats-details">
+        <div class="stat-item">
+          <div class="stat-value" id="todayCount">0</div>
+          <div class="stat-label-small">Today</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="totalSites">0</div>
+          <div class="stat-label-small">Sites</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="avgResponse">0ms</div>
+          <div class="stat-label-small">Avg</div>
+        </div>
+      </div>
+    </section>
+
+    
+    <section class="performance-section">
+      <div class="performance-header">
+        <div class="performance-title">Performance</div>
+        <div class="performance-indicator" id="performanceIndicator">
+          <div class="performance-dot"></div>
+        </div>
+      </div>
+      <div class="performance-stats">
+        <div class="performance-bar">
+          <div class="performance-label">CPU Usage</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="cpuUsage" style="width: 0%"></div>
+          </div>
+          <div class="progress-value" id="cpuValue">0%</div>
+        </div>
+        <div class="performance-bar">
+          <div class="performance-label">Memory</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="memoryUsage" style="width: 0%"></div>
+          </div>
+          <div class="progress-value" id="memoryValue">0MB</div>
+        </div>
+        <div class="performance-bar">
+          <div class="performance-label">Rules Active</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="rulesUsage" style="width: 0%"></div>
+          </div>
+          <div class="progress-value" id="rulesValue">0</div>
+        </div>
+      </div>
+    </section>
+
+    
+    <section class="activity-section">
+      <div class="activity-header">
+        <div class="activity-title">Recent Activity</div>
+        <div class="activity-time" id="lastUpdate">Just now</div>
+      </div>
+      <div class="activity-list" id="activityList">
+        <div class="activity-item">
+          <div class="activity-icon blocked"></div>
+          <div class="activity-details">
+            <div class="activity-text">Blocked ad on google.com</div>
+            <div class="activity-time">2s ago</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon blocked"></div>
+          <div class="activity-details">
+            <div class="activity-text">Blocked tracker on facebook.com</div>
+            <div class="activity-time">5s ago</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon blocked"></div>
+          <div class="activity-details">
+            <div class="activity-text">Blocked analytics on youtube.com</div>
+            <div class="activity-time">8s ago</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    
+    <section class="toggle-section">
+      <div class="toggle-container">
+        <span class="toggle-label" id="toggleLabel">Enable ZenBlock</span>
+        <div class="toggle-switch" id="toggleSwitch" role="switch" aria-labelledby="toggleLabel" aria-checked="false" tabindex="0">
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+    </section>
+    
+    
+    <section class="action-buttons">
+      <button class="btn btn-primary" id="openOptions">Settings</button>
+      <button class="btn btn-secondary" id="viewStats">Statistics</button>
+    </section>
+  </main>
+  
+  
+  <footer class="footer">
+    ZenBlock v1.0.0
+  </footer>
+
+  <script>
+(function(){
+  var THEME = "dark";
+  var now = Date.now();
+  var perf = { blockedToday: 842, totalBlocked: 128463, avgResponseTime: 12, rulesActive: 312, totalSites: 5, responseTimes: [12,9,14,11,13] };
+  var domainStats = {
+    'doubleclick.net': { count: 41200, lastBlocked: now-60000, firstSeen: now-86400000*30 },
+    'googlesyndication.com': { count: 28900, lastBlocked: now-120000, firstSeen: now-86400000*29 },
+    'google-analytics.com': { count: 22100, lastBlocked: now-300000, firstSeen: now-86400000*27 },
+    'connect.facebook.net': { count: 15600, lastBlocked: now-600000, firstSeen: now-86400000*22 },
+    'ads.example.com': { count: 7800, lastBlocked: now-900000, firstSeen: now-86400000*15 }
+  };
+  var syncStore = {
+    isEnabled: true,
+    whitelist: ['news.example.com', 'shop.example.org', 'docs.example.net'],
+    filterLists: { easyList: true, privacyList: true },
+    updateFrequency: '7',
+    theme: THEME,
+    customFilterLists: {
+      c_1: { id:'c_1', name:'Curated Tracker Rules', description:'Community-maintained tracker rules', url:'https://example.org/trackers.txt', ruleCount: 412, enabled: true }
+    }
+  };
+  var localStore = { blockedCount: 128463, performanceStats: perf, domainStats: domainStats, totalSites: 5 };
+  function makeGet(store){
+    return function(keys, cb){
+      var arr = Array.isArray(keys) ? keys : [keys];
+      var out = {};
+      arr.forEach(function(k){ if (store[k] !== undefined) out[k] = store[k]; });
+      if (typeof cb === 'function') cb(out);
+      return Promise.resolve(out);
+    };
+  }
+  function makeSet(){ return function(obj, cb){ if (typeof cb === 'function') cb(); return Promise.resolve(); }; }
+  function noopClear(cb){ if (typeof cb === 'function') cb(); return Promise.resolve(); }
+  window.chrome = {
+    storage: {
+      sync: { get: makeGet(syncStore), set: makeSet(), clear: noopClear },
+      local: { get: makeGet(localStore), set: makeSet(), clear: noopClear }
+    },
+    runtime: {
+      sendMessage: function(msg){
+        if (msg && msg.action === 'getStats') {
+          return Promise.resolve({ success: true, data: { blockedCount: 128463, isEnabled: syncStore.isEnabled, performanceStats: perf, totalSites: Object.keys(domainStats).length } });
+        }
+        return Promise.resolve({ success: true });
+      },
+      onMessage: { addListener: function(){} },
+      onInstalled: { addListener: function(){} },
+      onUpdateAvailable: { addListener: function(){} },
+      openOptionsPage: function(){ return Promise.resolve(); },
+      getURL: function(p){ return p; },
+      lastError: null
+    },
+    tabs: { create: function(){ return Promise.resolve(); }, query: function(){ return Promise.resolve([{url:'https://example.com/'}]); } },
+    action: { setIcon: function(){} },
+    alarms: { create: function(){}, onAlarm: { addListener: function(){} } },
+    declarativeNetRequest: { updateDynamicRules: function(){ return Promise.resolve(); }, getDynamicRules: function(){ return Promise.resolve([]); }, getMatchedRules: function(){ return Promise.resolve({rulesMatchedInfo:[]}); } }
+  };
+  try { localStorage.setItem('zenblock-theme', THEME); } catch(e){}
+  if (THEME === 'dark') {
+    document.addEventListener('DOMContentLoaded', function(){ document.body.setAttribute('data-theme','dark'); });
+  }
+})();
+</script>
+  <script src="../../popup.js"></script>
+</body>
+</html>

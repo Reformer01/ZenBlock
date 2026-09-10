@@ -1108,7 +1108,7 @@
   <div class="container">
     
     <nav class="sidebar">
-      <a href="#dashboard" class="nav-item active" data-icon="chart-bar" data-section="dashboard" aria-current="page">Dashboard</a>
+      <a href="#dashboard" class="nav-item active" aria-current="page" data-icon="chart-bar" data-section="dashboard" >Dashboard</a>
       <a href="#whitelist" class="nav-item" data-icon="lock-key" data-section="whitelist">Whitelist</a>
       <a href="#filters" class="nav-item" data-icon="shield-check" data-section="filters">Filter Lists</a>
       <a href="#advanced" class="nav-item" data-icon="gear-six" data-section="advanced">Advanced</a>
@@ -1126,19 +1126,19 @@
 
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-value" id="blockedCount">0</div>
+            <div class="stat-value" id="blockedCount">128.5K</div>
             <div class="stat-label">Ads Blocked</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" id="whitelistCount">0</div>
+            <div class="stat-value" id="whitelistCount">3</div>
             <div class="stat-label">Whitelisted Sites</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" id="filterCount">0</div>
+            <div class="stat-value" id="filterCount">2</div>
             <div class="stat-label">Active Filters</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" id="uptimeCount">0%</div>
+            <div class="stat-value" id="uptimeCount">100%</div>
             <div class="stat-label">Uptime</div>
           </div>
         </div>
@@ -1168,19 +1168,56 @@
         </tr>
       </thead>
       <tbody id="siteStatsBody">
-        
         <tr>
-          <td colspan="5" class="text-center" id="noStatsMessage">
-            <div style="padding: 20px; color: var(--text-muted);">
-              <div class="empty-state-icon" aria-hidden="true"></div>
-              <div>No statistics available yet</div>
-              <div style="font-size: 13px; margin-top: 8px;">
-                Visit some websites to see per-site blocking statistics
-              </div>
-            </div>
+          <td>doubleclick.net</td>
+          <td>24720</td>
+          <td>16480</td>
+          <td>Just now</td>
+          <td>
+            <button class="btn btn-sm btn-secondary view-details" data-domain="doubleclick.net">Details</button>
+            <button class="btn btn-sm btn-danger clear-stats" data-domain="doubleclick.net">Clear</button>
           </td>
         </tr>
-      </tbody>
+        <tr>
+          <td>googlesyndication.com</td>
+          <td>17340</td>
+          <td>11560</td>
+          <td>Just now</td>
+          <td>
+            <button class="btn btn-sm btn-secondary view-details" data-domain="googlesyndication.com">Details</button>
+            <button class="btn btn-sm btn-danger clear-stats" data-domain="googlesyndication.com">Clear</button>
+          </td>
+        </tr>
+        <tr>
+          <td>google-analytics.com</td>
+          <td>13260</td>
+          <td>8840</td>
+          <td>Just now</td>
+          <td>
+            <button class="btn btn-sm btn-secondary view-details" data-domain="google-analytics.com">Details</button>
+            <button class="btn btn-sm btn-danger clear-stats" data-domain="google-analytics.com">Clear</button>
+          </td>
+        </tr>
+        <tr>
+          <td>connect.facebook.net</td>
+          <td>9360</td>
+          <td>6240</td>
+          <td>Just now</td>
+          <td>
+            <button class="btn btn-sm btn-secondary view-details" data-domain="connect.facebook.net">Details</button>
+            <button class="btn btn-sm btn-danger clear-stats" data-domain="connect.facebook.net">Clear</button>
+          </td>
+        </tr>
+        <tr>
+          <td>ads.example.com</td>
+          <td>4680</td>
+          <td>3120</td>
+          <td>Just now</td>
+          <td>
+            <button class="btn btn-sm btn-secondary view-details" data-domain="ads.example.com">Details</button>
+            <button class="btn btn-sm btn-danger clear-stats" data-domain="ads.example.com">Clear</button>
+          </td>
+        </tr></tbody>
     </table>
   </div>
   
@@ -1455,6 +1492,12 @@
   </div>
 
   
-  <script src="options.js"></script>
+  <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    <button class="btn btn-secondary" id="generateSampleData" title="Generate sample data for testing">
+      Generate Sample Data
+    </button>
+  </div>
+
+  
 </body>
 </html>

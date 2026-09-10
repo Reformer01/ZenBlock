@@ -1,0 +1,90 @@
+ZENBLOCK - CHROME WEB STORE LISTING COPY
+=========================================
+(All copy is ready to paste into the Developer Dashboard. Verified against current
+Chrome Web Store requirements: 2026.)
+
+
+ITEM NAME
+---------
+ZenBlock
+
+
+SUMMARY  (max 132 characters, shown under the title)
+---------------------------------------------------
+Block ads, pop-ups, banners, and trackers for faster, calmer, more private browsing.
+
+
+DETAILED DESCRIPTION  (paste into the description field, ~1,300 words incl. formatting)
+--------------------------------------------------------------------------------------
+ZenBlock keeps your browsing calm, fast, and private.
+
+Tired of crowded pages, autoplaying videos, and being followed by trackers? ZenBlock
+removes the clutter so you can focus. It works silently in the background using the
+same community-maintained filter rules trusted by millions, and it lets you stay in
+control with per-site whitelists and your own custom filter lists.
+
+WHAT IT DOES
+- Blocks ads, pop-ups, banners, and video ads across the web
+- Stops trackers and analytics scripts from following you
+- Blocks advertising and tracking domains at the network level before they load a
+  single byte, which saves bandwidth and speeds up page loads
+- Keeps everything private: all settings and statistics stay on your device
+
+WHY ZENBLOCK
+- Effective by default: ships with the EasyList ruleset enabled so protection starts
+  the moment you install it
+- Real, honest statistics: the Dashboard shows the requests actually blocked by the
+  extension; nothing is simulated
+- Whitelist trusted sites in one click
+- Add your own filter lists (e.g., regional or custom community lists) right from the
+  options page
+- Automatic filter updates every 7 days by default (configurable)
+- Beautiful light and dark themes that follow your preference
+- Small, fast, and battery-friendly: built on Chrome's native Declarative Net Request
+  engine, so no heavy JavaScript runs on the pages you visit
+
+PRIVACY FIRST
+- No accounts, no sign-ups, no tracking of your browsing habits
+- Nothing you block is ever uploaded anywhere
+- Filter lists are fetched from well-known public sources (EasyList) over HTTPS
+- All data is stored locally in your browser using Chrome's extension storage
+- The extension never collects, sells, or shares personal information
+
+HOW IT WORKS
+ZenBlock installs its filter rules through Chrome's Declarative Net Request API. When
+you visit a page, Chrome evaluates those rules before any network data is loaded, so
+ads and trackers are stopped at the source. Matching can display the number of
+requests ZenBlock has blocked for you, right on the Dashboard.
+
+WHAT ABOUT MY FAVORITE SITES?
+Some sites rely on ads to stay free. If a page breaks or you simply want to support a
+site, add it to your whitelist. ZenBlock will leave that site untouched while keeping
+the rest of your browsing protected.
+
+SUPPORT
+Issues or suggestions? Open a report on the project issue tracker. We respond to every
+report and ship regular updates with improved rule coverage and new features.
+
+
+CATEGORY
+--------
+Productivity  (ad/tracker blocking is classified as Productivity in the Chrome Web
+Store; privacy/security alternative: "Search Tools" is not eligible - use Productivity)
+
+
+LANGUAGE
+--------
+English (United States)
+
+
+TAGS / KEYWORDS  (add as many as the dashboard allows)
+------------------------------------------------------
+ad blocker, adblock, privacy, tracker blocker, pop-up blocker, fast browsing, EasyList,
+no ads, secure browsing
+
+
+CHROME WEB STORE "SINGLE PURPOSE" POSITIONING
+---------------------------------------------
+Category: Privacy and security  |  Single purpose: Block ads and trackers.
+Keep the listing text focused on ad/tracker blocking; do not mention any other
+product line, data-syncing service, or affiliate content in the listing.

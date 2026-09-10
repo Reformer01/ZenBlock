@@ -118,7 +118,17 @@ document.addEventListener('DOMContentLoaded', () => {
     switchSection(initialHash);
   }
 
-  function updateDashboardStats(data) {
+  async function updateDashboardStats() {
+    let data = {};
+    let syncData = {};
+    try {
+      syncData = await chrome.storage.sync.get(['isEnabled', 'whitelist', 'filterLists', 'updateFrequency', 'lastFilterUpdate']);
+      const localData = await chrome.storage.local.get(['blockedCount', 'performanceStats']);
+      data = Object.assign({}, syncData, localData);
+    } catch (error) {
+      data = {};
+      syncData = {};
+    }
 
     const blockedCount = document.getElementById('blockedCount');
     const whitelistCount = document.getElementById('whitelistCount');
@@ -170,8 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const lastUpdate = document.getElementById('lastUpdate');
-    if (lastUpdate && data.lastFilterUpdate) {
-      const date = new Date(data.lastFilterUpdate);
+    if (lastUpdate && syncData.lastFilterUpdate) {
+      const date = new Date(syncData.lastFilterUpdate);
       lastUpdate.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
     }
   }
@@ -277,6 +287,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return div.innerHTML;
   }
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function showError(message) {
     const errorDiv = document.createElement('div');
     errorDiv.style.cssText = 'color: #dc3545; font-size: 12px; margin-top: 5px;';
@@ -298,7 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadSettings() {
     try {
-      const data = await chrome.storage.sync.get(['whitelist', 'filterLists', 'updateFrequency', 'performanceStats', 'theme']);
+      const data = await chrome.storage.sync.get(['whitelist', 'filterLists', 'updateFrequency', 'theme']);
+      const localData = await chrome.storage.local.get(['performanceStats']);
+      data.performanceStats = localData.performanceStats;
       
 
       if (data.theme) {
@@ -321,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (updateFrequency) updateFrequency.value = data.updateFrequency || '7';
 
-      updateDashboardStats(data);
+      updateDashboardStats();
 
       setupToggleSwitches();
 
@@ -416,13 +437,14 @@ document.addEventListener('DOMContentLoaded', () => {
     whitelist.forEach(domain => {
       const item = document.createElement('div');
       item.className = 'whitelist-item';
+      const safeDomain = escapeHtml(domain);
       item.innerHTML = `
-        <span class="whitelist-domain">${domain}</span>
+        <span class="whitelist-domain">${safeDomain}</span>
         <div class="whitelist-actions">
-          <button class="btn btn-sm btn-success" data-domain="${domain}" title="Test if site is accessible">
+          <button class="btn btn-sm btn-success" data-domain="${safeDomain}" title="Test if site is accessible">
             Test
           </button>
-          <button class="btn btn-sm btn-danger" data-domain="${domain}" title="Remove from whitelist">
+          <button class="btn btn-sm btn-danger" data-domain="${safeDomain}" title="Remove from whitelist">
             Remove
           </button>
         </div>
@@ -453,21 +475,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function testDomain(domain) {
     try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const url = tabs && tabs[0] && tabs[0].url ? tabs[0].url : '';
-      let host = '';
-      try { host = new URL(url).hostname.toLowerCase(); } catch (e) {}
       const target = String(domain || '').toLowerCase();
       const data = await chrome.storage.sync.get(['whitelist', 'isEnabled']);
       const listed = (data.whitelist || []).some(d => String(d).toLowerCase() === target);
       const enabled = data.isEnabled !== false;
-      const onSite = host === target || (host && target && host.endsWith('.' + target));
       if (listed) {
         showError(target + ' is whitelisted, so ZenBlock allows ads there.');
       } else if (!enabled) {
         showError('ZenBlock is currently paused, so nothing is being blocked.');
-      } else if (onSite) {
-        showSavedMessage(target + ' is protected. Blocking is active on this site.');
       } else {
         showSavedMessage(target + ' is not whitelisted. Blocking applies when you visit it.');
       }
@@ -792,7 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initSiteStats() {
 
-    chrome.storage.sync.get('domainStats', (data) => {
+    chrome.storage.local.get('domainStats', (data) => {
       const domainStats = data.domainStats || {};
       
 
@@ -822,7 +837,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('clearSiteData')?.addEventListener('click', clearAllSiteData);
     
 
-    document.getElementById('generateSampleData')?.addEventListener('click', generateSampleData);
   }
 
   function filterSiteStats() {
@@ -890,16 +904,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     paginatedStats.forEach(site => {
       const row = document.createElement('tr');
+      const safeDomain = escapeHtml(site.domain);
       row.innerHTML = `
-        <td>${site.domain}</td>
+        <td>${safeDomain}</td>
         <td>${site.adsBlocked || 0}</td>
         <td>${site.trackersBlocked || 0}</td>
         <td>${formatDate(site.lastBlocked)}</td>
         <td>
-          <button class="btn btn-sm btn-secondary view-details" data-domain="${site.domain}">
+          <button class="btn btn-sm btn-secondary view-details" data-domain="${safeDomain}">
             Details
           </button>
-          <button class="btn btn-sm btn-danger clear-stats" data-domain="${site.domain}">
+          <button class="btn btn-sm btn-danger clear-stats" data-domain="${safeDomain}">
             Clear
           </button>
         </td>
@@ -959,20 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
 
     const activityContainer = document.getElementById('detailsRecentActivity');
-    activityContainer.innerHTML = `
-      <div class="activity-item">
-        Ad blocked: doubleclick.net
-        <span class="activity-time">${formatDate(Date.now() - 1000 * 60 * 5)}</span>
-      </div>
-      <div class="activity-item">
-        Tracker blocked: google-analytics.com
-        <span class="activity-time">${formatDate(Date.now() - 1000 * 60 * 15)}</span>
-      </div>
-      <div class="activity-item">
-        Ad blocked: googlesyndication.com
-        <span class="activity-time">${formatDate(Date.now() - 1000 * 60 * 30)}</span>
-      </div>
-    `;
+    activityContainer.textContent = 'Recent activity will appear here once requests are blocked on this site.';
     
 
     modal.classList.add('active');
@@ -991,10 +993,10 @@ document.addEventListener('DOMContentLoaded', () => {
       filteredSiteStats = filteredSiteStats.filter(site => site.domain !== domain);
       
 
-      chrome.storage.sync.get('domainStats', (data) => {
+      chrome.storage.local.get('domainStats', (data) => {
         const domainStats = data.domainStats || {};
         delete domainStats[domain];
-        chrome.storage.sync.set({ domainStats: domainStats }, () => {
+        chrome.storage.local.set({ domainStats: domainStats }, () => {
           updateSiteStatsDisplay();
         });
       });
@@ -1049,11 +1051,6 @@ document.addEventListener('DOMContentLoaded', () => {
       clearSiteStats(domain);
       closeSiteDetailsModal();
     }
-  }
-
-  function generateSampleData() {
-    initSiteStats();
-    showSavedMessage('Statistics reflect real blocked requests.');
   }
 
   document.addEventListener('DOMContentLoaded', () => {

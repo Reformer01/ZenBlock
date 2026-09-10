@@ -1,0 +1,87 @@
+ZENBLOCK - WEB STORE SUBMISSION CHECKLIST
+==========================================
+Everything below is prepared and verified. Work through this list in the Chrome Web
+Store Developer Dashboard (https://chrome.google.com/webstore/devconsole).
+
+BEFORE YOU START
+----------------
+[ ] Have a Chrome Web Store developer account (one-time $5 registration fee).
+[ ] Create the item: "New item" -> upload package c:/Users/NGFEP/ZenBlock-1.0.0.zip
+
+
+1. PACKAGE  (the zip)
+----------------------
+[ ] c:/Users/NGFEP/ZenBlock-1.0.0.zip  - rebuilt 2026-09-10 from the current source.
+    Contains exactly 31 files: manifest.json, background.js, options.html, options.js,
+    popup.html, popup.js, filters/, icons/ (incl. 16 Phosphor SVGs).
+[ ] manifest.json validated (parses cleanly).
+[ ] Version 1.0.0  |  MV3  |  name "ZenBlock".
+[ ] Permissions are minimal and each is actually used:
+      alarms, declarativeNetRequest, declarativeNetRequestFeedback, storage
+[ ] host_permissions: <all_urls>
+[ ] No remote code: every script is packaged; CSP restricts connect-src to https.
+
+
+2. STORE LISTING  (text in webstore/listing-copy.txt)
+-------------------------------------------------------
+[ ] Name:                    ZenBlock
+[ ] Summary (<=132 chars):  "Block ads, pop-ups, banners, and trackers for faster,
+                            calmer, more private browsing."
+[ ] Detailed description:   paste from listing-copy.txt
+[ ] Category:               Productivity
+[ ] Language:               English (United States)
+[ ] Tags:                   ad blocker, adblock, privacy, tracker blocker, pop-up
+                            blocker, fast browsing, EasyList
+
+
+3. GRAPHICS  (in webstore/out/ - all verified PNG, correct dimensions)
+-----------------------------------------------------------------------
+Extension icon:
+[ ] Store icon 128x128 ---------- upload webstore/out/icon-512.png
+    (512px source is acceptable; CWS accepts 128px+ - this one is square PNG with a
+     rounded lotus on a blue gradient tile, no text)
+
+Screenshots (1280x800, full bleed, square corners - verified 1280x800):
+[ ] 01-popup-light.png     - popup, light theme (ads/tracker activity + toggle)
+[ ] 02-dashboard-light.png - options Dashboard, light theme (stats grid)
+[ ] 03-filters-dark.png    - Filter Lists section, dark theme (toggles + custom lists)
+[ ] 04-popup-dark.png      - popup, dark theme
+[ ] 05-whitelist-light.png - Whitelist section, light theme (domain rows)
+Order them 01..05 (most important first): popup -> dashboard -> filters -> popup dark
+-> whitelist.
+
+Promotional images:
+[ ] Small promo 440x280 ---- webstore/out/promo-small-440x280.png
+[ ] Marquee 1400x560 -------- webstore/out/promo-marquee-1400x560.png
+(Marquee is currently "Pending review" until you publish; that is normal.)
+
+
+4. PRIVACY (required for ANY extension that requests host permissions)
+-----------------------------------------------------------------------
+[ ] "Privacy practices" tab -> "Does the extension transmit user data?" = NO is NOT
+    the right answer here; this extension requires host permissions, so you must fill
+    the full form:
+       - Data usage: No personal or sensitive user data is collected or transmitted.
+       - Remote code: Not used.
+       - Justify each permission from webstore/privacy-policy.txt (section 4).
+[ ] Privacy policy URL: host webstore/privacy-policy.txt content at a public URL and
+    enter it. (Example: the project GitHub with a PRIVACY.md page - or any page you
+    control. DO NOT reference a link that does not exist yet.)
+
+
+5. DISTRIBUTION
+----------------
+[ ] Publish as "Public" (or begin with "Unlisted" during your own smoke test).
+[ ] Version bump policy: every code change requires bumping version in manifest.json
+    before re-uploading; keep the zip name ZenBlock-<version>.zip.
+[ ] After first approval, use "skip review for eligible changes" for manifest-only
+    tweaks where allowed.
+
+
+6. POST-PUBLISH SMOKE TEST (run in chrome://extensions with the installed package)
+-----------------------------------------------------------------------------------
+[ ] Install the zip; confirm "Ads blocked" increments while browsing a page with ads.
+[ ] Toggle the master switch on/off in the popup.
+[ ] Options: switch sections (Dashboard / Whitelist / Filter Lists / Advanced / About).
+[ ] Toggle a filter list; whitelist a domain; add/remove a custom list.
+[ ] Confirm icon and both themes render; confirm keyboard Tab navigation works.

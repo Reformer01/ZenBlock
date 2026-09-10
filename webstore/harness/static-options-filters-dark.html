@@ -1095,7 +1095,7 @@
     }
   </style>
 </head>
-<body data-theme="light">
+<body data-theme="dark">
   
   <header class="header">
     <div class="header-title">ZenBlock Settings</div>
@@ -1108,9 +1108,9 @@
   <div class="container">
     
     <nav class="sidebar">
-      <a href="#dashboard" class="nav-item active" data-icon="chart-bar" data-section="dashboard" aria-current="page">Dashboard</a>
+      <a href="#dashboard" class="nav-item" data-icon="chart-bar" data-section="dashboard" >Dashboard</a>
       <a href="#whitelist" class="nav-item" data-icon="lock-key" data-section="whitelist">Whitelist</a>
-      <a href="#filters" class="nav-item" data-icon="shield-check" data-section="filters">Filter Lists</a>
+      <a href="#filters" class="nav-item active" aria-current="page" data-icon="shield-check" data-section="filters">Filter Lists</a>
       <a href="#advanced" class="nav-item" data-icon="gear-six" data-section="advanced">Advanced</a>
       <a href="#about" class="nav-item" data-icon="info" data-section="about">About</a>
     </nav>
@@ -1118,7 +1118,7 @@
     
     <main class="main-content">
       
-      <section id="dashboard" class="content-section active">
+      <section id="dashboard" class="content-section">
         <div class="section-header">
           <h1 class="section-title">Dashboard</h1>
           <p class="section-description">Overview of ZenBlock performance and statistics</p>
@@ -1227,7 +1227,7 @@
       </section>
 
       
-      <section id="filters" class="content-section">
+      <section id="filters" class="content-section active">
         <div class="section-header">
           <h1 class="section-title">Filter Lists</h1>
           <p class="section-description">Configure which filter lists to use for ad blocking</p>
@@ -1247,7 +1247,7 @@
         </div>
         
         <div class="form-checkbox">
-          <input type="checkbox" id="enablePrivacyList">
+          <input type="checkbox" id="enablePrivacyList" checked>
           <div class="toggle-switch"></div>
           <label for="enablePrivacyList">
             <span class="label-title">Privacy Protection</span>
@@ -1259,6 +1259,13 @@
         <div class="card">
           <h3 class="card-title" data-icon="clipboard-text">Filter List Management</h3>
           <div class="filter-lists-container" id="filterListsContainer">
+            <div class="filter-list-row">
+              <div class="filter-list-info">
+                <div class="filter-list-name">Curated Tracker Rules</div>
+                <div class="filter-list-meta">412 rules - https://example.org/trackers.txt</div>
+              </div>
+              <button class="btn btn-danger btn-sm" type="button">Remove</button>
+            </div>
             
           </div>
           
@@ -1455,6 +1462,12 @@
   </div>
 
   
-  <script src="options.js"></script>
+  <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    <button class="btn btn-secondary" id="generateSampleData" title="Generate sample data for testing">
+      Generate Sample Data
+    </button>
+  </div>
+
+  
 </body>
 </html>

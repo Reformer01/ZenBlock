@@ -39,27 +39,44 @@ const FILTER_LISTS = {
 chrome.runtime.onInstalled.addListener(async (details) => {
   try {
     
-    const defaults = {
-      blockedCount: 0,
+    const syncDefaults = {
       isEnabled: true,
       whitelist: [],
       filterLists: { easyList: true, privacyList: false },
       updateFrequency: '7',
-      lastFilterUpdate: Date.now(),
-      performanceStats: { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 }
+      lastFilterUpdate: Date.now()
+    };
+    const localDefaults = {
+      blockedCount: 0,
+      performanceStats: { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 },
+      domainStats: {},
+      totalSites: 0
     };
 
-    const result = await chrome.storage.sync.get(Object.keys(defaults));
-    const updates = {};
+    const syncResult = await chrome.storage.sync.get(Object.keys(syncDefaults));
+    const syncUpdates = {};
     
-    for (const [key, value] of Object.entries(defaults)) {
-      if (result[key] === undefined) {
-        updates[key] = value;
+    for (const [key, value] of Object.entries(syncDefaults)) {
+      if (syncResult[key] === undefined) {
+        syncUpdates[key] = value;
       }
     }
     
-    if (Object.keys(updates).length > 0) {
-      await chrome.storage.sync.set(updates);
+    if (Object.keys(syncUpdates).length > 0) {
+      await chrome.storage.sync.set(syncUpdates);
+    }
+
+    const localResult = await chrome.storage.local.get(Object.keys(localDefaults));
+    const localUpdates = {};
+
+    for (const [key, value] of Object.entries(localDefaults)) {
+      if (localResult[key] === undefined) {
+        localUpdates[key] = value;
+      }
+    }
+
+    if (Object.keys(localUpdates).length > 0) {
+      await chrome.storage.local.set(localUpdates);
     }
     
 
@@ -69,7 +86,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
   } catch (error) {
 
-    await chrome.storage.sync.set({ isEnabled: true, blockedCount: 0 });
+    await chrome.storage.sync.set({ isEnabled: true });
+    await chrome.storage.local.set({ blockedCount: 0 });
     await applyFallbackRules();
   }
 });
@@ -582,7 +600,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function handleGetStats(sendResponse) {
   try {
-    const data = await chrome.storage.sync.get(['blockedCount', 'isEnabled', 'performanceStats', 'domainStats']);
+    const syncData = await chrome.storage.sync.get(['isEnabled']);
+    const localData = await chrome.storage.local.get(['blockedCount', 'performanceStats', 'domainStats']);
+    const data = Object.assign({}, syncData, localData);
     const response = {
       success: true,
       data: {
@@ -767,7 +787,7 @@ function initializePerformanceMonitoring() {
 
 async function updatePerformanceMetrics() {
   try {
-    const performanceStats = await chrome.storage.sync.get(['performanceStats']);
+    const performanceStats = await chrome.storage.local.get(['performanceStats']);
     const stats = performanceStats.performanceStats || { 
       blockedToday: 0, 
       totalBlocked: 0, 
@@ -791,7 +811,7 @@ async function updatePerformanceMetrics() {
       stats.responseTimes = stats.responseTimes.slice(-10);
     }
     
-    await chrome.storage.sync.set({ performanceStats: stats });
+    await chrome.storage.local.set({ performanceStats: stats });
     
   } catch (error) {}
 }
@@ -884,7 +904,7 @@ async function applyFilterRules(rules) {
 }
 
 function logPerformance(operation, responseTime, details = 0) {
-  chrome.storage.sync.get(['performanceStats'], (data) => {
+  chrome.storage.local.get(['performanceStats'], (data) => {
     const stats = data.performanceStats || { 
       blockedToday: 0, 
       totalBlocked: 0, 
@@ -904,7 +924,7 @@ function logPerformance(operation, responseTime, details = 0) {
 
     stats.avgResponseTime = stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length;
     
-    chrome.storage.sync.set({ performanceStats: stats });
+    chrome.storage.local.set({ performanceStats: stats });
   });
 }
 
@@ -934,7 +954,7 @@ async function trackBlockedRequests() {
     
     if (newRules.length > 0) {
 
-      const result = await chrome.storage.sync.get(['blockedCount', 'performanceStats', 'domainStats', 'totalSites']);
+      const result = await chrome.storage.local.get(['blockedCount', 'performanceStats', 'domainStats', 'totalSites']);
       const newCount = (result.blockedCount || 0) + newRules.length;
       const performanceStats = result.performanceStats || { 
         blockedToday: 0, 
@@ -989,7 +1009,7 @@ async function trackBlockedRequests() {
       });
       
 
-      await chrome.storage.sync.set({
+      await chrome.storage.local.set({
         blockedCount: newCount,
         performanceStats: performanceStats,
         domainStats: domainStats,

@@ -6,6 +6,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewStatsButton = document.getElementById('viewStats');
   const themeToggle = document.getElementById('themeToggle');
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function escapeCssClass(value) {
+    return String(value == null ? '' : value).replace(/[^a-zA-Z0-9_-]/g, '');
+  }
+
   function initTheme() {
     const savedTheme = localStorage.getItem('zenblock-theme') || 'light';
     document.body.setAttribute('data-theme', savedTheme);
@@ -48,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
 function updatePerformanceData() {
-  chrome.storage.sync.get(['performanceStats'], (data) => {
+  chrome.storage.local.get(['performanceStats'], (data) => {
     const stored = data.performanceStats || {};
     performanceData = {
       rulesActive: stored.rulesActive || 0,
@@ -112,10 +125,10 @@ function updatePerformanceUI() {
       const activityText = getActivityText(activity);
       
       activityItem.innerHTML = `
-        <div class="activity-icon ${activity.type}"></div>
+        <div class="activity-icon ${escapeCssClass(activity.type)}"></div>
         <div class="activity-details">
-          <div class="activity-text">${activityText}</div>
-          <div class="activity-time">${timeAgo}</div>
+          <div class="activity-text">${escapeHtml(activityText)}</div>
+          <div class="activity-time">${escapeHtml(timeAgo)}</div>
         </div>
       `;
       
@@ -411,8 +424,7 @@ function updatePerformanceUI() {
       
 
       try {
-        const optionsUrl = chrome.runtime.getURL('options.html');
-        chrome.tabs.create({ url: optionsUrl });
+        await chrome.runtime.openOptionsPage();
       } catch (fallbackError) {
         showErrorIndicator();
       }
@@ -430,8 +442,12 @@ function updatePerformanceUI() {
   
 
   if (viewStatsButton) {
-    viewStatsButton.addEventListener('click', () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('options.html#dashboard') });
+    viewStatsButton.addEventListener('click', async () => {
+      try {
+        await chrome.runtime.openOptionsPage();
+      } catch (error) {
+        showErrorIndicator();
+      }
     });
   }
 

@@ -2,13 +2,12 @@
   "manifest_version": 3,
   "name": "ZenBlock",
   "version": "1.0.0",
-  "description": "A powerful and secure ad-blocking extension that blocks ads and trackers.",
+  "description": "Blocks ads, pop-ups, banners, and trackers for faster, calmer browsing.",
   "permissions": [
     "alarms",
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
-    "storage",
-    "tabs"
+    "storage"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {
