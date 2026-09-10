@@ -1,0 +1,79 @@
+ZENBLOCK - CHROME WEB STORE PERMISSION JUSTIFICATIONS
+=====================================================
+(Paste each block verbatim into the matching justification field, 1000 char limit
+each. Text below is <1000 chars per field and grounded in the shipped code.)
+
+
+1) alarms  (justification field)
+--------------------------------------------------------------------
+ZenBlock is a Manifest V3 extension. Its background service worker is suspended when
+not needed, so JavaScript timers such as setInterval are not reliable in MV3 and the
+alarms API is the only supported mechanism for periodic background work. background.js
+uses chrome.alarms.create for three tasks: (1) an hourly wake-up that refreshes the
+community filter lists (EasyList) from their official HTTPS sources whenever the
+user's update interval (default 7 days) has elapsed, (2) a five-minute update of the
+rule-count performance metric, and (3) a one-minute statistics pass that calls
+chrome.declarativeNetRequest.getMatchedRules to keep blocked-request counters
+accurate. The onAlarm listener dispatches each named task. Alarms carry no user data -
+only fixed task names defined in the extension's constants.
+
+(~700 chars)
+
+
+2) declarativeNetRequest  (justification field)
+--------------------------------------------------------------------
+declarativeNetRequest is the core engine of this ad blocker. The extension downloads
+public filter lists (EasyList and EasyPrivacy) over HTTPS from their official sources,
+parses them into network-blocking rules, and installs those rules with
+chrome.declarativeNetRequest.updateDynamicRules in background.js. Chrome then blocks
+advertising and tracking requests at the network layer before any bytes are loaded,
+which is the single declared purpose of the extension. getDynamicRules is used to read
+the currently active ruleset when filtering is re-enabled or lists are updated. Rules
+are removed via updateDynamicRules({ removeRuleIds }) when the user pauses blocking.
+Only background.js calls this API; no popup, options page, or web page code touches it.
+
+(~650 chars)
+
+
+3) declarativeNetRequestFeedback  (justification field)
+--------------------------------------------------------------------
+declarativeNetRequestFeedback is used solely to show honest, real blocking statistics.
+On a one-minute schedule, background.js calls chrome.declarativeNetRequest.getMatchedRules()
+to read which installed block rules actually matched network activity. The result is
+used to increment local-only counters (blockedCount, performanceStats, domainStats,
+totalSites) shown on the extension Dashboard. The API returns rule identifiers and the
+URLs of matched requests; that data is stored privately in chrome.storage.local and is
+never transmitted anywhere. If the API's call quota is exceeded, the extension backs
+off automatically and retries at the next interval, so the permission cannot cause
+excessive quota use.
+
+(~640 chars)
+
+
+4) storage  (justification field)
+--------------------------------------------------------------------
+storage is required to persist user settings and statistics locally on the device.
+chrome.storage.sync stores user preferences - enabled state, whitelisted domains,
+enabled filter lists, update frequency, and theme - so options follow the user across
+devices when signed in to Chrome. chrome.storage.local stores non-synced data only:
+blocked-request counters, per-domain statistics, and a short-term cache of downloaded
+filter list text. No stored value contains personal information and all keys are owned
+by the extension (background.js, options.js, popup.js, 52 call sites). Data is removed
+when the extension is uninstalled. Nothing stored is ever transmitted to any server.
+
+(~620 chars)
+
+
+5) Host permission  (host permission justification field)
+--------------------------------------------------------------------
+ZenBlock's only function is to block ads and trackers. Its rules, installed through
+the Declarative Net Request API, must be able to match requests on any website the
+user visits, so the host permission <all_urls> is required for the rules to be
+enforced everywhere; this is the standard and expected scope for an ad blocker. The
+extension does not read or modify page content - no content script is injected and the
+rules match only URL patterns compiled from public filter lists. Users can whitelist
+specific sites, which disables blocking for those hosts, and can pause the extension
+entirely, which removes all rules. This permission exists solely to fulfill the
+extension's single stated purpose.
+
+(~600 chars)
