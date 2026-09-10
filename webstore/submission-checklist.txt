@@ -37,9 +37,14 @@ BEFORE YOU START
 3. GRAPHICS  (in webstore/out/ - all verified PNG, correct dimensions)
 -----------------------------------------------------------------------
 Extension icon:
-[ ] Store icon 128x128 ---------- upload webstore/out/icon-512.png
-    (512px source is acceptable; CWS accepts 128px+ - this one is square PNG with a
-     rounded lotus on a blue gradient tile, no text)
+[ ] Store icon 128x128 ---------- upload webstore/out/store-icon-128.png
+    (Exact 128x128, PNG, RGB no transparency, full-bleed square (no rounded corners),
+     no drop shadow, no border, no text. Blue gradient tile + white lotus.
+     Hi-res source kept at webstore/out/icon-512.png for reference.)
+
+Toolbar icons (bundled in package; manifest action.default_icon + icons):
+[ ] icons/icon16.png / icon48.png / icon128.png regenerated from the same lotus art,
+    so the browser toolbar icon matches the store icon (verified legible at 16px).
 
 Screenshots (1280x800, full bleed, square corners - verified 1280x800):
 [ ] 01-popup-light.png     - popup, light theme (ads/tracker activity + toggle)
