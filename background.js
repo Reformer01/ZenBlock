@@ -44,7 +44,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       whitelist: [],
       filterLists: { easyList: true, privacyList: false },
       updateFrequency: '7',
-      lastFilterUpdate: Date.now()
+      lastFilterUpdate: 0
     };
     const localDefaults = {
       blockedCount: 0,
@@ -80,7 +80,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     }
     
 
-    await loadFilterLists();
+    await loadFilterLists(0, true);
 
     initializePerformanceMonitoring();
 
@@ -90,6 +90,18 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     await chrome.storage.local.set({ blockedCount: 0 });
     await applyFallbackRules();
   }
+});
+
+chrome.runtime.onStartup.addListener(async () => {
+  try {
+    const [{ isEnabled }, existingRules] = await Promise.all([
+      chrome.storage.sync.get(['isEnabled']),
+      chrome.declarativeNetRequest.getDynamicRules()
+    ]);
+    if (isEnabled !== false && existingRules.length === 0) {
+      await loadFilterLists(0, true);
+    }
+  } catch (error) {}
 });
 
 async function loadFilterLists(retryCount = 0, force = false) {
@@ -372,7 +384,6 @@ function parseCSSRule(line) {
 }
 
 function parseFilterList(filterList) {
-  const rules = [];
   const cssRules = {
     global: [],
     domains: {},
@@ -380,8 +391,14 @@ function parseFilterList(filterList) {
   };
   const lines = filterList.split('\n');
   let id = 1;
-  let ruleCount = 0;
-  
+
+  // Rules are bucketed so the most valuable ones are installed first:
+  // exception rules, then domain-anchored rules (||domain^), then generic
+  // pattern rules fill any remaining capacity up to MAX_RULES.
+  const exceptionRules = [];
+  const domainRules = [];
+  const genericRules = [];
+
   for (const line of lines) {
 
     if (line.startsWith('!') || line.trim() === '') continue;
@@ -395,13 +412,11 @@ function parseFilterList(filterList) {
         const cssRule = parseCSSRule(line);
         if (cssRule) {
           if (cssRule.isException) {
-
             if (!cssRules.exceptions[cssRule.domain]) {
               cssRules.exceptions[cssRule.domain] = [];
             }
             cssRules.exceptions[cssRule.domain].push(cssRule.selector);
           } else {
-
             if (!cssRules.domains[cssRule.domain]) {
               cssRules.domains[cssRule.domain] = [];
             }
@@ -415,8 +430,33 @@ function parseFilterList(filterList) {
       if (line.startsWith('@@')) {
         const exceptionRule = parseExceptionRule(line, id++);
         if (exceptionRule) {
-          rules.push(exceptionRule);
-          ruleCount++;
+          exceptionRules.push(exceptionRule);
+        }
+        continue;
+      }
+      
+
+      if (line.startsWith('||')) {
+        if (line.includes('$')) {
+          const resourceRule = parseResourceTypeRule(line, id++);
+          if (resourceRule) {
+            domainRules.push(resourceRule);
+          }
+        } else if (line.endsWith('^')) {
+          const domain = line.substring(2, line.length - 1);
+          if (isValidFilterDomain(domain)) {
+            domainRules.push(createComprehensiveBlockRule(id++, domain));
+          }
+        } else if (line.includes('^')) {
+          const domain = line.substring(2, line.indexOf('^'));
+          if (isValidFilterDomain(domain)) {
+            domainRules.push(createComprehensiveBlockRule(id++, domain));
+          }
+        } else {
+          const domain = line.substring(2);
+          if (isValidFilterDomain(domain)) {
+            domainRules.push(createComprehensiveBlockRule(id++, domain));
+          }
         }
         continue;
       }
@@ -425,8 +465,7 @@ function parseFilterList(filterList) {
       if (line.startsWith('/') && line.includes('/')) {
         const urlRule = parseURLPatternRule(line, id++);
         if (urlRule) {
-          rules.push(urlRule);
-          ruleCount++;
+          genericRules.push(urlRule);
         }
         continue;
       }
@@ -435,42 +474,12 @@ function parseFilterList(filterList) {
       if (line.includes('$')) {
         const resourceRule = parseResourceTypeRule(line, id++);
         if (resourceRule) {
-          rules.push(resourceRule);
-          ruleCount++;
+          genericRules.push(resourceRule);
         }
         continue;
       }
       
 
-      if (line.startsWith('||') && line.endsWith('^')) {
-        const domain = line.substring(2, line.length - 1);
-        if (isValidFilterDomain(domain)) {
-          rules.push(createComprehensiveBlockRule(id++, domain));
-          ruleCount++;
-        }
-      }
-
-      else if (line.startsWith('||') && line.includes('^')) {
-        const domain = line.substring(2, line.indexOf('^'));
-        if (isValidFilterDomain(domain)) {
-          rules.push(createComprehensiveBlockRule(id++, domain));
-          ruleCount++;
-        }
-      }
-
-      else if (line.startsWith('||')) {
-        const domain = line.substring(2);
-        if (isValidFilterDomain(domain)) {
-          rules.push(createComprehensiveBlockRule(id++, domain));
-          ruleCount++;
-        }
-      }
-      
-
-      if (ruleCount >= ADBLOCK_CONFIG.MAX_RULES) {
-        break;
-      }
-      
     } catch (error) {
       continue;
     }
@@ -479,6 +488,12 @@ function parseFilterList(filterList) {
 
   if (Object.keys(cssRules.domains).length > 0 || cssRules.global.length > 0) {
     try { chrome.storage.local.set({ cssRules: cssRules }).catch(() => {}); } catch (e) {}
+  }
+  
+  const rules = exceptionRules.concat(domainRules);
+  const remaining = ADBLOCK_CONFIG.MAX_RULES - rules.length;
+  if (remaining > 0 && genericRules.length > 0) {
+    rules.push(...genericRules.slice(0, remaining));
   }
   
   return rules;
@@ -629,7 +644,7 @@ async function handleToggleEnabled(isEnabled) {
     
 
     if (isEnabled) {
-      await loadFilterLists();
+      await loadFilterLists(0, true);
       startStatsTracking();
     } else {
       await chrome.declarativeNetRequest.updateDynamicRules({
@@ -655,7 +670,7 @@ async function handleUpdateWhitelist(whitelist) {
     ).map(domain => domain.trim().toLowerCase());
     
     await chrome.storage.sync.set({ whitelist: validWhitelist });
-    await loadFilterLists();
+    await loadFilterLists(0, true);
     
   } catch (error) {}
 }
@@ -853,9 +868,14 @@ async function applyFilterRules(rules) {
     
 
     const deduplicatedRules = deduplicateRules(rules);
-    
 
-    const updatedRules = deduplicatedRules.map(rule => ({
+    // Assign sequential IDs so rules from multiple filter lists
+    // (each parsed with IDs starting at 1) can never collide.
+    const mergedRules = deduplicatedRules
+      .slice(0, ADBLOCK_CONFIG.MAX_RULES)
+      .map((rule, index) => ({ ...rule, id: index + 1 }));
+
+    const updatedRules = mergedRules.map(rule => ({
       ...rule,
       condition: {
         ...rule.condition,
