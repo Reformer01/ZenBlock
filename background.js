@@ -661,16 +661,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           
         case 'toggleEnabled':
           await handleToggleEnabled(request.isEnabled);
-          return false;
+          sendResponse({ success: true });
+          return true;
           
         case 'reloadFilters':
 
           await loadFilterLists(0, true);
-          return false;
+          sendResponse({ success: true });
+          return true;
           
         case 'updateWhitelist':
           await handleUpdateWhitelist(request.whitelist);
-          return false;
+          sendResponse({ success: true });
+          return true;
           
         case 'addCustomFilterList':
           try {
@@ -691,6 +694,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           return true;
           
         default:
+          sendResponse({ success: false, error: 'Unknown action: ' + request.action });
       }
       
     } catch (error) {

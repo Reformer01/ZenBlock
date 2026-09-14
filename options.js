@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.runtime.sendMessage({
         action: 'updateWhitelist',
         whitelist: whitelist
-      });
+      }).catch(() => {});
       
       showSavedMessage();
       
@@ -478,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.runtime.sendMessage({
         action: 'updateWhitelist',
         whitelist: whitelist
-      });
+      }).catch(() => {});
       
     } catch (error) {
       showError('Failed to remove domain from whitelist');
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showSavedMessage();
       
 
-      chrome.runtime.sendMessage({ action: 'reloadFilters' });
+      chrome.runtime.sendMessage({ action: 'reloadFilters' }).catch(() => {});
       
     } catch (error) {
       showError('Failed to save settings');
