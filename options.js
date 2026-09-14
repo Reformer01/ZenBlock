@@ -1052,7 +1052,3 @@ document.addEventListener('DOMContentLoaded', () => {
       closeSiteDetailsModal();
     }
   }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    initSiteStats();
-  });
