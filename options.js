@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const filterLists = data.filterLists || { easyList: true, privacyList: false };
       if (enableEasyList) enableEasyList.checked = filterLists.easyList !== false;
-      if (enablePrivacyList) enablePrivacyList.checked = filterLists.privacyList || false;
+      if (enablePrivacyList) enablePrivacyList.checked = filterLists.privacyList !== false;
 
       if (updateFrequency) updateFrequency.value = data.updateFrequency || '7';
 
@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
           await chrome.storage.sync.set({
             isEnabled: true,
             whitelist: [],
-            filterLists: { easyList: true, privacyList: false },
+            filterLists: { easyList: true, privacyList: true },
             updateFrequency: '7',
             lastFilterUpdate: 0
           });

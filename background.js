@@ -42,7 +42,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     const syncDefaults = {
       isEnabled: true,
       whitelist: [],
-      filterLists: { easyList: true, privacyList: false },
+      filterLists: { easyList: true, privacyList: true },
       updateFrequency: '7',
       lastFilterUpdate: 0
     };
@@ -122,14 +122,20 @@ async function loadFilterLists(retryCount = 0, force = false) {
     
     if (shouldUpdate || retryCount > 0) {
       
+      const activeLists = [];
+      if (filterLists.easyList !== false) activeLists.push('easylist');
+      if (filterLists.privacyList !== false) activeLists.push('privacy');
+      const quota = activeLists.length > 0
+        ? Math.floor(ADBLOCK_CONFIG.MAX_RULES / activeLists.length)
+        : ADBLOCK_CONFIG.MAX_RULES;
       const filterPromises = [];
       
       if (filterLists.easyList !== false) {
-        filterPromises.push(loadFilterList('easylist'));
+        filterPromises.push(loadFilterList('easylist', quota));
       }
 
-      if (filterLists.privacyList === true) {
-        filterPromises.push(loadFilterList('privacy'));
+      if (filterLists.privacyList !== false) {
+        filterPromises.push(loadFilterList('privacy', quota));
       }
       
       const results = await Promise.allSettled(filterPromises);
@@ -154,7 +160,7 @@ async function loadFilterLists(retryCount = 0, force = false) {
   }
 }
 
-async function loadFilterList(listKey) {
+async function loadFilterList(listKey, quota) {
   const filterConfig = FILTER_LISTS[listKey];
   if (!filterConfig) {
     throw new Error(`Unknown filter list: ${listKey}`);
@@ -228,7 +234,7 @@ async function loadFilterList(listKey) {
     throw new Error(`Filter list ${filterConfig.name} appears to be empty or corrupted`);
   }
 
-  const rules = parseFilterList(filterList);
+  const rules = parseFilterList(filterList, quota || ADBLOCK_CONFIG.MAX_RULES);
   
 
   filterConfig.ruleCount = rules.length;
@@ -383,7 +389,7 @@ function parseCSSRule(line) {
   }
 }
 
-function parseFilterList(filterList) {
+function parseFilterList(filterList, quota = ADBLOCK_CONFIG.MAX_RULES) {
   const cssRules = {
     global: [],
     domains: {},
@@ -396,7 +402,8 @@ function parseFilterList(filterList) {
   // exception rules, then domain-anchored rules (||domain^), then generic
   // pattern rules fill any remaining capacity up to MAX_RULES.
   const exceptionRules = [];
-  const domainRules = [];
+  const domainEntries = [];
+  const domainParents = new Set();
   const genericRules = [];
 
   for (const line of lines) {
@@ -440,32 +447,43 @@ function parseFilterList(filterList) {
         if (line.includes('$')) {
           const resourceRule = parseResourceTypeRule(line, id++);
           if (resourceRule) {
-            domainRules.push(resourceRule);
+            const d = line.slice(2).split('^')[0].split('/')[0].toLowerCase();
+            if (isValidFilterDomain(d)) {
+              domainEntries.push({ domain: d, rule: resourceRule });
+            }
           }
         } else if (line.endsWith('^')) {
           const domain = line.substring(2, line.length - 1);
           if (isValidFilterDomain(domain)) {
-            domainRules.push(createComprehensiveBlockRule(id++, domain));
+            domainParents.add(domain);
+            domainEntries.push({ domain: domain, rule: createComprehensiveBlockRule(id++, domain) });
           }
         } else if (line.includes('^')) {
           const domain = line.substring(2, line.indexOf('^'));
           if (isValidFilterDomain(domain)) {
-            domainRules.push(createComprehensiveBlockRule(id++, domain));
+            domainParents.add(domain);
+            domainEntries.push({ domain: domain, rule: createComprehensiveBlockRule(id++, domain) });
           }
         } else {
           const domain = line.substring(2);
           if (isValidFilterDomain(domain)) {
-            domainRules.push(createComprehensiveBlockRule(id++, domain));
+            domainParents.add(domain);
+            domainEntries.push({ domain: domain, rule: createComprehensiveBlockRule(id++, domain) });
           }
         }
         continue;
       }
       
 
-      if (line.startsWith('/') && line.includes('/')) {
-        const urlRule = parseURLPatternRule(line, id++);
-        if (urlRule) {
-          genericRules.push(urlRule);
+      if (line.startsWith('/')) {
+        const regexRule = parseRegexRule(line, id++);
+        if (regexRule) {
+          genericRules.push(regexRule);
+        } else if (line.includes('/')) {
+          const urlRule = parseURLPatternRule(line, id++);
+          if (urlRule) {
+            genericRules.push(urlRule);
+          }
         }
         continue;
       }
@@ -480,6 +498,12 @@ function parseFilterList(filterList) {
       }
       
 
+      const plainRule = createPatternBlockRule(id++, line);
+      if (plainRule) {
+        genericRules.push(plainRule);
+      }
+      
+
     } catch (error) {
       continue;
     }
@@ -490,13 +514,79 @@ function parseFilterList(filterList) {
     try { chrome.storage.local.set({ cssRules: cssRules }).catch(() => {}); } catch (e) {}
   }
   
-  const rules = exceptionRules.concat(domainRules);
-  const remaining = ADBLOCK_CONFIG.MAX_RULES - rules.length;
+  // Subdomain rules are redundant when a parent-domain rule exists,
+  // so they are dropped to compress the ruleset under the DNR cap.
+  const keptDomainRules = domainEntries
+    .filter(e => {
+      for (let i = e.domain.indexOf('.'); i >= 0; i = e.domain.indexOf('.', i + 1)) {
+        if (domainParents.has(e.domain.slice(i + 1))) return false;
+      }
+      return true;
+    })
+    .map(e => e.rule);
+
+  const allowedDomainCount = Math.max(0, quota - exceptionRules.length);
+  const rules = exceptionRules.concat(keptDomainRules.slice(0, allowedDomainCount));
+  const remaining = quota - rules.length;
   if (remaining > 0 && genericRules.length > 0) {
     rules.push(...genericRules.slice(0, remaining));
   }
   
   return rules;
+}
+
+function createPatternBlockRule(id, urlFilter) {
+  try {
+    if (typeof urlFilter !== 'string') return null;
+    urlFilter = urlFilter.trim();
+    if (urlFilter.length < 3 || urlFilter.length > 500) return null;
+    return {
+      id: id,
+      priority: 1,
+      action: { type: 'block' },
+      condition: {
+        urlFilter: urlFilter,
+        resourceTypes: [
+          'script', 'image', 'stylesheet', 'object', 'xmlhttprequest',
+          'sub_frame', 'ping', 'csp_report', 'media', 'font', 'websocket', 'other'
+        ]
+      }
+    };
+  } catch (error) {}
+  return null;
+}
+
+function parseRegexRule(line, id) {
+  try {
+    let body = line;
+    let options = '';
+    const dollar = line.indexOf('$');
+    if (dollar >= 0) {
+      body = line.slice(0, dollar);
+      options = line.slice(dollar + 1);
+    }
+    if (!body.startsWith('/') || !body.endsWith('/') || body.length < 3) return null;
+    const pattern = body.slice(1, -1);
+    if (pattern.length < 3 || pattern.length > 1000) return null;
+    new RegExp(pattern);
+    const condition = {
+      regexFilter: pattern,
+      resourceTypes: [
+        'script', 'image', 'stylesheet', 'object', 'xmlhttprequest',
+        'sub_frame', 'ping', 'csp_report', 'media', 'font', 'websocket', 'other'
+      ]
+    };
+    if (options.includes('third-party') && !options.includes('~third-party')) {
+      condition.domainType = 'thirdParty';
+    }
+    return {
+      id: id,
+      priority: options.includes('important') ? 3 : 1,
+      action: { type: 'block' },
+      condition: condition
+    };
+  } catch (error) {}
+  return null;
 }
 
 function createComprehensiveBlockRule(id, domain) {
@@ -689,7 +779,7 @@ function deduplicateRules(rules) {
   const deduplicated = [];
   
   for (const rule of rules) {
-    const key = `${rule.condition.urlFilter}|${rule.action.type}`;
+    const key = `${rule.condition.urlFilter || rule.condition.regexFilter || ''}|${rule.action.type}`;
     if (!seen.has(key)) {
       seen.add(key);
       deduplicated.push(rule);
@@ -741,7 +831,7 @@ async function addCustomFilterList(name, url, description = '') {
     }
     
     const content = await response.text();
-    const rules = parseFilterList(content);
+    const rules = parseFilterList(content, 5000);
     customList.ruleCount = rules.length;
     customList.lastModified = new Date().toISOString();
     
