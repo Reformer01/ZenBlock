@@ -343,6 +343,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (updateFrequency) updateFrequency.value = data.updateFrequency || '7';
 
       updateDashboardStats();
+      const manifest = chrome.runtime.getManifest();
+      const extVersion = document.getElementById('extVersion');
+      if (extVersion) extVersion.textContent = manifest ? manifest.version : '1.0.0';
+      const swStatus = document.getElementById('swStatus');
+      if (swStatus) {
+        try {
+          const resp = await chrome.runtime.sendMessage({ action: 'getStats' });
+          swStatus.textContent = (resp && resp.success) ? 'Active' : 'Unresponsive';
+        } catch (e) {
+          swStatus.textContent = 'Unresponsive';
+        }
+      }
 
       setupToggleSwitches();
 
@@ -553,17 +565,21 @@ document.addEventListener('DOMContentLoaded', () => {
           await chrome.storage.local.clear();
           
 
-          const defaults = {
-            blockedCount: 0,
+          await chrome.storage.sync.set({
             isEnabled: true,
             whitelist: [],
             filterLists: { easyList: true, privacyList: false },
             updateFrequency: '7',
-            lastFilterUpdate: Date.now(),
-            performanceStats: { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 }
-          };
-          
-          await chrome.storage.sync.set(defaults);
+            lastFilterUpdate: 0
+          });
+          await chrome.storage.local.set({
+            blockedCount: 0,
+            performanceStats: { blockedToday: 0, totalBlocked: 0, avgResponseTime: 0 },
+            domainStats: {},
+            totalSites: 0
+          });
+
+          chrome.runtime.sendMessage({ action: 'reloadFilters' }).catch(() => {});
           
 
           window.location.reload();
@@ -806,22 +822,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let filteredSiteStats = [];
 
   function initSiteStats() {
+    loadSiteStats();
 
-    chrome.storage.local.get('domainStats', (data) => {
-      const domainStats = data.domainStats || {};
-      
-
-      allSiteStats = Object.entries(domainStats).map(([domain, stats]) => ({
-        domain: domain || 'unknown',
-        adsBlocked: Math.floor((stats.count || 0) * 0.6),
-        trackersBlocked: Math.floor((stats.count || 0) * 0.4),
-        lastBlocked: stats.lastBlocked || Date.now(),
-        firstSeen: stats.firstSeen || Date.now(),
-        totalBlocked: stats.count || 0
-      }));
-      
-      filteredSiteStats = [...allSiteStats];
-      updateSiteStatsDisplay();
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && (changes.blockedCount || changes.domainStats || changes.performanceStats)) {
+        updateDashboardStats();
+        loadSiteStats();
+      }
     });
 
     document.getElementById('siteFilter')?.addEventListener('input', filterSiteStats);
@@ -829,14 +836,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('itemsPerPage')?.addEventListener('change', updateItemsPerPage);
     document.getElementById('prevPage')?.addEventListener('click', goToPrevPage);
     document.getElementById('nextPage')?.addEventListener('click', goToNextPage);
-    
 
     document.getElementById('closeDetailsModal')?.addEventListener('click', closeSiteDetailsModal);
     document.getElementById('closeDetailsModalBtn')?.addEventListener('click', closeSiteDetailsModal);
     document.getElementById('exportSiteData')?.addEventListener('click', exportSiteData);
     document.getElementById('clearSiteData')?.addEventListener('click', clearAllSiteData);
-    
+  }
 
+  function loadSiteStats() {
+    chrome.storage.local.get('domainStats', (data) => {
+      const domainStats = data.domainStats || {};
+
+      allSiteStats = Object.entries(domainStats).map(([domain, stats]) => ({
+        domain: domain || 'unknown',
+        adsBlocked: stats.ads || 0,
+        trackersBlocked: stats.trackers || 0,
+        lastBlocked: stats.lastBlocked || Date.now(),
+        firstSeen: stats.firstSeen || Date.now(),
+        totalBlocked: stats.count || 0
+      }));
+
+      filteredSiteStats = [...allSiteStats];
+      updateSiteStatsDisplay();
+    });
   }
 
   function filterSiteStats() {
@@ -974,7 +996,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
 
     const activityContainer = document.getElementById('detailsRecentActivity');
-    activityContainer.textContent = 'Recent activity will appear here once requests are blocked on this site.';
+    const recordedAds = siteData.adsBlocked || 0;
+    const recordedTrackers = siteData.trackersBlocked || 0;
+    activityContainer.textContent = (recordedAds + recordedTrackers) > 0
+      ? `Recorded ${recordedAds} ad request(s) and ${recordedTrackers} tracker request(s) blocked on this site.`
+      : 'No ad or tracker requests have been recorded for this site yet.';
     
 
     modal.classList.add('active');

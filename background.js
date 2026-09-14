@@ -1007,23 +1007,21 @@ async function trackBlockedRequests() {
           
 
           let blockType = 'blocked';
-          if (rule.condition && rule.condition.urlFilter && (
-              rule.condition.urlFilter.includes('analytics') || 
-              rule.condition.urlFilter.includes('ga.js') ||
-              rule.condition.urlFilter.includes('gtm'))) {
-            blockType = 'analytics';
-          } else if (rule.condition && rule.condition.urlFilter && (
-                     rule.condition.urlFilter.includes('tr') ||
-                     rule.condition.urlFilter.includes('track') ||
-                     rule.condition.urlFilter.includes('pixel'))) {
-            blockType = 'tracker';
-          } else if (rule.condition && rule.condition.urlFilter && (
-                     rule.condition.urlFilter.includes('ad') ||
-                     rule.condition.urlFilter.includes('doubleclick') ||
-                     rule.condition.urlFilter.includes('googlesyndication'))) {
+          const reqUrl = (rule.request && rule.request.url) || '';
+          const filterText = (rule.condition && rule.condition.urlFilter) || '';
+          const classifyText = (reqUrl + ' ' + filterText).toLowerCase();
+          if (/analytics|doubleclick\.net|googlesyndication|adservice|adsystem|adnxs|criteo|taboola|outbrain|advert|adserver|\/ads?\b/.test(classifyText)) {
             blockType = 'ad';
+          } else if (/track|pixel|telemetry|beacon|scorecardresearch|segment\.io|amplitude|mixpanel/.test(classifyText)) {
+            blockType = 'tracker';
           }
-          
+
+          if (blockType === 'ad') {
+            domainStats[domain].ads = (domainStats[domain].ads || 0) + 1;
+          } else if (blockType === 'tracker') {
+            domainStats[domain].trackers = (domainStats[domain].trackers || 0) + 1;
+          }
+
           logActivity(blockType, domain, `Blocked ${rule.request?.type || 'unknown'} request`);
         } catch (e) {}
       });
